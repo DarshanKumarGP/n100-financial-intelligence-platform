@@ -46,37 +46,38 @@ foreign_key_check` returns 0 violations, 48/48 tests pass.
 
 ## Project Structure
 
+```
 n100_financial_intelligence/
 ├── data/
-│ ├── raw/ 7 core Excel files (read-only source data)
-│ ├── supporting/ 5 supplementary Excel files
-│ └── nifty100.db Generated SQLite database (not committed)
+│   ├── raw/                          7 core Excel files (read-only source data)
+│   ├── supporting/                   5 supplementary Excel files
+│   └── nifty100.db                   Generated SQLite database (not committed)
 ├── db/
-│ ├── schema.sql 12-table schema, PK/FK constraints
-│ └── loader.py Builds nifty100.db from all 12 source files
+│   ├── schema.sql                    12-table schema, PK/FK constraints
+│   └── loader.py                     Builds nifty100.db from all 12 source files
 ├── src/etl/
-│ ├── normaliser.py normalize_year(), normalize_ticker()
-│ └── validator.py 16 Data Quality rules (DQ-01 to DQ-16)
+│   ├── normaliser.py                 normalize_year(), normalize_ticker()
+│   └── validator.py                  16 Data Quality rules (DQ-01 to DQ-16)
 ├── tests/
-│ ├── etl/ 40 tests — year/ticker normalisation
-│ └── dq/ 8 tests — DQ rule logic
+│   ├── etl/                          40 tests — year/ticker normalisation
+│   └── dq/                           8 tests — DQ rule logic
 ├── notebooks/
-│ ├── exploratory_queries.sql 10 SQL queries against the loaded DB
-│ ├── day6_qa_review.md Manual QA on 5 sample companies
-│ └── sprint1_retro.md Full sprint retrospective + findings
+│   ├── exploratory_queries.sql       10 SQL queries against the loaded DB
+│   ├── day6_qa_review.md             Manual QA on 5 sample companies
+│   └── sprint1_retro.md              Full sprint retrospective + findings
 ├── output/
-│ ├── load_audit.csv Per-table row counts
-│ └── validation_failures.csv All DQ rule violations, with severity
+│   ├── load_audit.csv                Per-table row counts
+│   └── validation_failures.csv       All DQ rule violations, with severity
 ├── reports/
-│ └── pytest_report.html Full test suite HTML report
-├── dev_notes/diagnostics/ Investigation scripts (see its README)
+│   └── pytest_report.html            Full test suite HTML report (not committed)
+├── dev_notes/diagnostics/            Investigation scripts (see its README)
 ├── docs/
-│ └── Nifty100_Project_Document_FINAL.pdf Master spec
+│   └── Nifty100_Project_Document_FINAL.pdf   Master spec
 ├── requirements.txt
 ├── .env.template
 ├── Makefile
 └── README.md
-
+```
 
 ## What's implemented (Sprint 1 exit criteria)
 
