@@ -1,0 +1,14 @@
+# Environment
+.env
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated database (regenerate via: python db/loader.py)
+data/nifty100.db
+
+# Generated reports (regenerate via: pytest tests/ --html=...)
+reports/pytest_report.html
