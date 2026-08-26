@@ -9,5 +9,6 @@ prosandcons,14
 sectors,92
 stock_prices,5520
 market_cap,552
-financial_ratios,1041
+financial_ratios_source,1041
+financial_ratios,0
 peer_groups,56

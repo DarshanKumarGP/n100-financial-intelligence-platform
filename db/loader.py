@@ -134,7 +134,14 @@ def load_market_cap(conn, valid_ids):
     print(f"market_cap: {len(df)} rows loaded")
 
 
-def load_financial_ratios(conn, valid_ids):
+def load_financial_ratios_source(conn, valid_ids):
+    """
+    Loads the SOURCE-provided financial_ratios.xlsx into financial_ratios_source.
+    This is display/cross-check data only (spec Day 13) -- NOT the table our
+    own Ratio Engine writes to. Sprint 2 populates a separate, freshly-computed
+    'financial_ratios' table (see db/schema.sql), which is the authoritative
+    one for all analytics per Sprint 1 Finding 4 (source OPM field unreliable).
+    """
     df = pd.read_excel("data/supporting/financial_ratios.xlsx", header=0)
     df["company_id"] = df["company_id"].apply(normalize_ticker)
     df["year"] = df["year"].apply(normalize_year)
@@ -150,8 +157,8 @@ def load_financial_ratios(conn, valid_ids):
             "free_cash_flow_cr", "capex_cr", "earnings_per_share", "book_value_per_share",
             "dividend_payout_ratio_pct", "total_debt_cr", "cash_from_operations_cr"]
     df = df[cols]
-    df.to_sql("financial_ratios", conn, if_exists="append", index=False)
-    print(f"financial_ratios: {len(df)} rows loaded")
+    df.to_sql("financial_ratios_source", conn, if_exists="append", index=False)
+    print(f"financial_ratios_source: {len(df)} rows loaded")
 
 
 def load_peer_groups(conn, valid_ids):
@@ -168,7 +175,7 @@ def load_peer_groups(conn, valid_ids):
 def generate_load_audit(conn):
     tables = ["companies", "profitandloss", "balancesheet", "cashflow", "documents",
               "analysis", "prosandcons", "sectors", "stock_prices", "market_cap",
-              "financial_ratios", "peer_groups"]
+              "financial_ratios_source", "financial_ratios", "peer_groups"]
     rows = []
     for t in tables:
         count = conn.execute(f"SELECT COUNT(*) FROM {t};").fetchone()[0]
@@ -211,7 +218,7 @@ def main():
     load_sectors(conn, valid_ids)
     load_stock_prices(conn, valid_ids)
     load_market_cap(conn, valid_ids)
-    load_financial_ratios(conn, valid_ids)
+    load_financial_ratios_source(conn, valid_ids)
     load_peer_groups(conn, valid_ids)
 
     conn.commit()

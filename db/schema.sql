@@ -124,7 +124,7 @@ CREATE TABLE market_cap (
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
-CREATE TABLE financial_ratios (
+CREATE TABLE financial_ratios_source (
     company_id                  TEXT NOT NULL,
     year                          TEXT NOT NULL,
     net_profit_margin_pct           REAL,
@@ -149,5 +149,49 @@ CREATE TABLE peer_groups (
     peer_group_name          TEXT NOT NULL,
     company_id                  TEXT NOT NULL,
     is_benchmark                    INTEGER DEFAULT 0,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
+CREATE TABLE financial_ratios (
+    company_id                    TEXT NOT NULL,
+    year                            TEXT NOT NULL,
+    net_profit_margin_pct             REAL,
+    operating_profit_margin_pct         REAL,
+    return_on_equity_pct                  REAL,
+    return_on_capital_employed_pct          REAL,
+    return_on_assets_pct                      REAL,
+    debt_to_equity                              REAL,
+    high_leverage_flag                            INTEGER,
+    interest_coverage                               REAL,
+    icr_label                                         TEXT,
+    icr_warning_flag                                    INTEGER,
+    net_debt_cr                                           REAL,
+    asset_turnover                                          REAL,
+    free_cash_flow_cr                                         REAL,
+    capex_cr                                                    REAL,
+    capex_intensity_label                                         TEXT,
+    fcf_conversion_pct                                               REAL,
+    cfo_quality_label                                                  TEXT,
+    earnings_per_share                                                   REAL,
+    book_value_per_share                                                  REAL,
+    dividend_payout_ratio_pct                                              REAL,
+    total_debt_cr                                                            REAL,
+    cash_from_operations_cr                                                   REAL,
+    revenue_cagr_3yr                                                            REAL,
+    revenue_cagr_3yr_flag                                                        TEXT,
+    revenue_cagr_5yr                                                              REAL,
+    revenue_cagr_5yr_flag                                                          TEXT,
+    revenue_cagr_10yr                                                               REAL,
+    revenue_cagr_10yr_flag                                                          TEXT,
+    pat_cagr_3yr                                                                    REAL,
+    pat_cagr_3yr_flag                                                                TEXT,
+    pat_cagr_5yr                                                                      REAL,
+    pat_cagr_5yr_flag                                                                  TEXT,
+    pat_cagr_10yr                                                                       REAL,
+    pat_cagr_10yr_flag                                                                   TEXT,
+    eps_cagr_5yr                                                                          REAL,
+    eps_cagr_5yr_flag                                                                      TEXT,
+    composite_quality_score                                                                 REAL,
+    PRIMARY KEY (company_id, year),
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );

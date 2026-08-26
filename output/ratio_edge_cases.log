@@ -1,0 +1,236 @@
+N100 Financial Intelligence Platform -- Ratio Edge Case Log
+Generated: 2026-08-26T10:59:15.230817
+Total anomalies found (>5% diff, computed vs source): 54
+================================================================================
+
+[FORMULA DISCREPANCY] ABB -- ROCE (2024-03)
+  Computed: 36.54%  |  Source: 46.00%  |  Diff: 9.46pp
+  Note: Diff of 9.5 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] ADANIENT -- ROE (2024-03)
+  Computed: 8.53%  |  Source: 13.64%  |  Diff: 5.11pp
+  Note: Diff of 5.1 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] ADANIGREEN -- ROCE (2024-03)
+  Computed: 7.25%  |  Source: 96.50%  |  Diff: 89.25pp
+  Note: Borrowings (64858 Cr) are 6.6x equity+reserves, so our ROCE denominator (equity+reserves+borrowings) is debt-dominated. Source roce_percentage likely uses a different capital-employed definition. Confirmed NOT a balance-sheet-date timing issue (checked equity+reserves stability across 2024-03 vs 2024-09 -- shift too small to explain this gap).
+
+[FORMULA DISCREPANCY] ADANIPOWER -- ROCE (2024-03)
+  Computed: 18.39%  |  Source: 32.20%  |  Diff: 13.81pp
+  Note: Diff of 13.8 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] ADANIPOWER -- ROE (2024-03)
+  Computed: 48.28%  |  Source: 57.10%  |  Diff: 8.82pp
+  Note: Diff of 8.8 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] ASIANPAINT -- ROCE (2024-03)
+  Computed: 31.75%  |  Source: 41.75%  |  Diff: 10.00pp
+  Note: Diff of 10.0 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] BAJAJ-AUTO -- ROCE (2024-03)
+  Computed: 27.21%  |  Source: 33.50%  |  Diff: 6.29pp
+  Note: Diff of 6.3 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] BAJAJFINSV -- ROCE (2024-03)
+  Computed: 11.45%  |  Source: 21.14%  |  Diff: 9.69pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] BAJAJFINSV -- ROE (2024-03)
+  Computed: 25.85%  |  Source: 11.72%  |  Diff: 14.13pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] BAJAJHLDNG -- ROCE (2024-03)
+  Computed: 2.81%  |  Source: 13.10%  |  Diff: 10.29pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] BAJFINANCE -- ROCE (2024-03)
+  Computed: 4.17%  |  Source: 11.90%  |  Diff: 7.73pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] BEL -- ROCE (2024-03)
+  Computed: 3628.35%  |  Source: 34.60%  |  Diff: 3593.75pp
+  Note: BEL's standalone equity_capital+reserves is unusually small relative to net_profit, producing an extreme computed ROE/ROCE. Likely reflects standalone (not consolidated) entity-level figures in the source balance sheet data. Same confirmed pattern as HAL (see notebooks/day6_qa_review.md).
+
+[FORMULA DISCREPANCY] BEL -- ROE (2024-03)
+  Computed: 4744.05%  |  Source: 26.30%  |  Diff: 4717.75pp
+  Note: BEL's standalone equity_capital+reserves is unusually small relative to net_profit, producing an extreme computed ROE/ROCE. Likely reflects standalone (not consolidated) entity-level figures in the source balance sheet data. Same confirmed pattern as HAL (see notebooks/day6_qa_review.md).
+
+[FORMULA DISCREPANCY] BOSCHLTD -- ROCE (2024-03)
+  Computed: 13.76%  |  Source: 20.60%  |  Diff: 6.84pp
+  Note: Diff of 6.8 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] BPCL -- ROE (2024-03)
+  Computed: 35.51%  |  Source: 41.90%  |  Diff: 6.39pp
+  Note: Diff of 6.4 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] CHOLAFIN -- ROCE (2024-03)
+  Computed: 3.37%  |  Source: 10.40%  |  Diff: 7.03pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[DATA SOURCE ISSUE] CIPLA -- ROCE (2024-03)
+  Computed: 67.60%  |  Source: 22.80%  |  Diff: 44.80pp
+  Note: Computed ROCE matches our EBIT/capital_employed formula exactly, but CIPLA's operating_profit is unusually large relative to net_profit for its sector, which drives most of the gap vs source roce_percentage. Worth flagging operating_profit reliability for this company, similar in spirit to the opm_percentage field issue (Sprint 1 Finding 4).
+
+[DATA SOURCE ISSUE] COALINDIA -- ROCE (2024-03)
+  Computed: 98.17%  |  Source: 63.60%  |  Diff: 34.57pp
+  Note: Computed ROCE matches our EBIT/capital_employed formula exactly, but COALINDIA's operating_profit is unusually large relative to net_profit for its sector, which drives most of the gap vs source roce_percentage. Worth flagging operating_profit reliability for this company, similar in spirit to the opm_percentage field issue (Sprint 1 Finding 4).
+
+[FORMULA DISCREPANCY] COALINDIA -- ROE (2024-03)
+  Computed: 45.17%  |  Source: 52.00%  |  Diff: 6.83pp
+  Note: Diff of 6.8 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] DRREDDY -- ROCE (2024-03)
+  Computed: 21.36%  |  Source: 26.50%  |  Diff: 5.14pp
+  Note: Diff of 5.1 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] EICHERMOT -- ROCE (2024-03)
+  Computed: 20.21%  |  Source: 31.10%  |  Diff: 10.89pp
+  Note: Diff of 10.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] GODREJCP -- ROCE (2024-03)
+  Computed: 17.17%  |  Source: 26.49%  |  Diff: 9.32pp
+  Note: Diff of 9.3 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] GODREJCP -- ROE (2024-03)
+  Computed: -4.45%  |  Source: 6.77%  |  Diff: 11.22pp
+  Note: Diff of 11.2 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] HAL -- ROCE (2024-03)
+  Computed: 2590.99%  |  Source: 38.90%  |  Diff: 2552.09pp
+  Note: HAL's standalone equity_capital+reserves is unusually small relative to net_profit, producing an extreme computed ROE/ROCE. Likely reflects standalone (not consolidated) entity-level figures in the source balance sheet data. Same confirmed pattern as HAL (see notebooks/day6_qa_review.md).
+
+[FORMULA DISCREPANCY] HAL -- ROE (2024-03)
+  Computed: 3816.58%  |  Source: 28.90%  |  Diff: 3787.68pp
+  Note: HAL's standalone equity_capital+reserves is unusually small relative to net_profit, producing an extreme computed ROE/ROCE. Likely reflects standalone (not consolidated) entity-level figures in the source balance sheet data. Same confirmed pattern as HAL (see notebooks/day6_qa_review.md).
+
+[FORMULA DISCREPANCY] HDFCLIFE -- ROCE (2024-03)
+  Computed: 645.95%  |  Source: 6.61%  |  Diff: 639.34pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] HEROMOTOCO -- ROCE (2024-03)
+  Computed: 173.71%  |  Source: 29.10%  |  Diff: 144.61pp
+  Note: Diff of 144.6 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] HINDALCO -- ROCE (2024-03)
+  Computed: 113.58%  |  Source: 11.30%  |  Diff: 102.28pp
+  Note: Diff of 102.3 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] HINDUNILVR -- ROCE (2024-03)
+  Computed: 87.32%  |  Source: 27.20%  |  Diff: 60.12pp
+  Note: Diff of 60.1 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] ICICIGI -- ROCE (2024-03)
+  Computed: 145.23%  |  Source: 22.50%  |  Diff: 122.73pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] ICICIPRULI -- ROCE (2024-03)
+  Computed: 753.98%  |  Source: 8.75%  |  Diff: 745.23pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] INDIGO -- ROCE (2024-03)
+  Computed: 4953.54%  |  Source: 24.50%  |  Diff: 4929.04pp
+  Note: Diff of 4929.0 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] INFY -- ROCE (2024-03)
+  Computed: 32.91%  |  Source: 40.00%  |  Diff: 7.09pp
+  Note: Diff of 7.1 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] IRCTC -- ROCE (2024-03)
+  Computed: 42.83%  |  Source: 53.80%  |  Diff: 10.97pp
+  Note: Diff of 11.0 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] IRCTC -- ROE (2024-03)
+  Computed: 34.40%  |  Source: 40.40%  |  Diff: 6.00pp
+  Note: Diff of 6.0 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] LICI -- ROCE (2024-03)
+  Computed: 39.05%  |  Source: 63.79%  |  Diff: 24.74pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] LICI -- ROE (2024-03)
+  Computed: 49.45%  |  Source: 63.61%  |  Diff: 14.16pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] LT -- ROCE (2024-03)
+  Computed: 118.53%  |  Source: 17.18%  |  Diff: 101.35pp
+  Note: Diff of 101.4 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] LT -- ROE (2024-03)
+  Computed: 77.67%  |  Source: 10.49%  |  Diff: 67.18pp
+  Note: Diff of 67.2 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] LTIM -- ROCE (2024-03)
+  Computed: 25.21%  |  Source: 34.10%  |  Diff: 8.89pp
+  Note: Diff of 8.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] M&M -- ROCE (2024-03)
+  Computed: 11.54%  |  Source: 26.98%  |  Diff: 15.44pp
+  Note: Diff of 15.4 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] MARUTI -- ROCE (2024-03)
+  Computed: 15.59%  |  Source: 23.67%  |  Diff: 8.08pp
+  Note: Diff of 8.1 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] NESTLEIND -- ROCE (2024-03)
+  Computed: 143.15%  |  Source: 185.43%  |  Diff: 42.28pp
+  Note: Diff of 42.3 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] NESTLEIND -- ROE (2024-03)
+  Computed: 117.75%  |  Source: 135.61%  |  Diff: 17.86pp
+  Note: Diff of 17.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] PFC -- ROCE (2024-03)
+  Computed: 3.48%  |  Source: 9.96%  |  Diff: 6.48pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] PFC -- ROE (2024-03)
+  Computed: 26.16%  |  Source: 19.49%  |  Diff: 6.67pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] PNB -- ROE (2024-03)
+  Computed: 61.32%  |  Source: 8.70%  |  Diff: 52.62pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] SBILIFE -- ROCE (2024-03)
+  Computed: 1.14%  |  Source: 13.20%  |  Diff: 12.06pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] SHRIRAMFIN -- ROCE (2024-03)
+  Computed: 4.06%  |  Source: 11.30%  |  Diff: 7.24pp
+  Note: Company is in the Financials sector -- ROCE as computed is not directly comparable to source roce_percentage, which likely uses a bank-specific formula per spec Section 28.
+
+[FORMULA DISCREPANCY] SIEMENS -- ROCE (2024-09)
+  Computed: 17.74%  |  Source: 25.60%  |  Diff: 7.86pp
+  Note: Diff of 7.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] TATAMOTORS -- ROE (2024-03)
+  Computed: 37.46%  |  Source: 49.40%  |  Diff: 11.94pp
+  Note: Diff of 11.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[FORMULA DISCREPANCY] TATASTEEL -- ROE (2024-03)
+  Computed: -5.33%  |  Source: 6.55%  |  Diff: 11.88pp
+  Note: Diff of 11.9 percentage points, computed lower than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+[DATA SOURCE ISSUE] TCS -- ROE (2024-03)
+  Computed: 50.94%  |  Source: 0.52%  |  Diff: 50.42pp
+  Note: companies.xlsx roe_percentage=0.52 for TCS is implausible on its face (real TCS ROE is ~45-50%). Source value likely a unit/decimal error upstream. Use computed value for all analytics.
+
+[FORMULA DISCREPANCY] TRENT -- ROE (2024-03)
+  Computed: 36.31%  |  Source: 27.20%  |  Diff: 9.11pp
+  Note: Diff of 9.1 percentage points, computed higher than source. Checked and ruled out: extreme small-denominator effect, high-debt capital-employed skew, balance-sheet-date mismatch. Most plausibly a capital-employed definition difference between our formula and the source's calculation method.
+
+================================================================================
+ADDITIONAL DOCUMENTED FINDINGS (not ROCE/ROE mismatches)
+================================================================================
+
+[DATA SOURCE ISSUE] opm_percentage field, 21 companies
+  See Sprint 1 Finding 4 / notebooks/sprint1_retro.md. Source field
+  is unreliable for 21 companies (155/234 flagged rows in Financials
+  sector specifically). Ratio Engine computes OPM directly
+  (operating_profit/sales*100) rather than trusting this field.
+
+[DATA SOURCE ISSUE] SBIN missing from balancesheet.xlsx
+  See Sprint 1 Finding 8. All balance-sheet-dependent ratios
+  (ROE, ROCE, D/E, Net Debt, Asset Turnover) are NULL for SBIN
+  across every year. P&L-based ratios (NPM, OPM) remain populated.
+
