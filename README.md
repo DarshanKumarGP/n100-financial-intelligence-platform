@@ -1,19 +1,17 @@
 # N100 Financial Intelligence Platform
 
-**Status:** Sprint 3 complete · **Sprint:** Days 1–21 of 45
+**Status:** Sprint 4 complete · **Sprint:** Days 1–28 of 45
 **Author:** Darshan Kumar · Bluestock Fintech Internship
 
 ## Overview
 
 This project builds a unified SQLite data warehouse and analytics engine
-for 92 Nifty 100 companies. Sprint 1 (Days 1–7) built the data foundation
-— ingestion, validation, and loading of 12 raw Excel files into
-`nifty100.db`. Sprint 2 (Days 8–14) built the Financial Ratio Engine —
-30+ computed KPIs per company-year, CAGR growth metrics, cash flow
-intelligence, and a capital allocation classifier. Sprint 3 (Days 15–21)
-built the Investment Screener (6 preset filters, custom threshold
-support) and Peer Comparison Engine (percentile rankings across 11 peer
-groups, radar charts, colour-coded Excel reports).
+for 92 Nifty 100 companies. Sprint 1 (Days 1–7) built the data foundation.
+Sprint 2 (Days 8–14) built the Financial Ratio Engine. Sprint 3 (Days
+15–21) built the Investment Screener and Peer Comparison Engine. Sprint 4
+(Days 22–28) built an 8-screen Streamlit dashboard and the Valuation
+module — FCF yield, sector-relative overvaluation flags, and a live
+analyst-facing interface over everything built in the first three sprints.
 
 ## Quick Start
 
@@ -32,7 +30,6 @@ pip install -r requirements.txt
 
 # 4. Configure environment
 cp .env.template .env
-# edit .env if needed (default paths should work as-is)
 
 # 5. Place source data
 # Copy the 7 core .xlsx files into data/raw/
@@ -53,14 +50,32 @@ python src/analytics/peer.py
 python src/reports/generate_radar_charts.py
 python src/reports/generate_peer_comparison.py
 
-# 9. Run the full test suite
+# 9. Run the Valuation module (Sprint 4)
+python src/analytics/valuation.py
+
+# 10. Launch the dashboard (Sprint 4)
+streamlit run src/dashboard/app.py
+
+# 11. Run the full test suite
 pytest tests/ --html=reports/pytest_report.html --self-contained-html -v
 ```
 
-Expected result: `data/nifty100.db` built with 15 tables, `PRAGMA
-foreign_key_check` returns 0 violations, `financial_ratios` has 1,070
-rows with sector-relative composite scores, `peer_percentiles` has 560
-rows, 92 radar charts generated, 109/109 unit tests pass.
+Expected result: dashboard opens at `http://localhost:8501` with 8
+navigable screens, `output/valuation_summary.xlsx` has 92 rows, 109/109
+unit tests pass.
+
+## Dashboard Screens
+
+| Screen | What it shows |
+|---|---|
+| **Home** | 6 summary KPI tiles (median-based, outlier-robust), sector donut chart (10 real sectors), top 5 companies by composite quality score, year selector |
+| **Company Profile** | Search by name/ticker, company card, 6 KPI tiles, Revenue/Net Profit and ROE/ROCE dual-axis charts (up to 10yr), pros/cons badges, graceful handling of missing data (e.g. SBIN) and thin history (e.g. JIOFIN) |
+| **Screener** | 10 metric sliders, 6 one-click presets, live-updating results table, CSV export |
+| **Peer Comparison** | Peer group selector, 8-axis radar chart (company vs peer average), full comparison table with benchmark row highlighted |
+| **Trend Analysis** | Overlay up to 3 metrics over 10 years, hover tooltips show YoY % change |
+| **Sector Analysis** | Bubble chart (Revenue × ROE × Market Cap, coloured by sub-sector), sector median KPI charts |
+| **Capital Allocation Map** | Treemap of all 92 companies by 8 capital allocation patterns, dropdown to browse companies within a pattern |
+| **Annual Reports** | Company search, clickable BSE PDF links, "Report unavailable" badge for missing links |
 
 ## Project Structure
 ```
@@ -83,15 +98,20 @@ n100_financial_intelligence/
 │ │ ├── populate_ratios.py Populates the financial_ratios table
 │ │ ├── generate_capital_allocation.py Generates capital_allocation.csv
 │ │ ├── generate_edge_case_log.py Cross-checks computed vs source ROCE/ROE
-│ │ └── peer.py Peer percentile rankings (11 groups, 10 metrics)
+│ │ ├── peer.py Peer percentile rankings (11 groups, 10 metrics)
+│ │ └── valuation.py FCF yield, sector median P/E, overvaluation flags
 │ ├── screener/
 │ │ ├── engine.py Filter engine — 15 metrics, sector exemptions
 │ │ ├── presets.py 6 preset screeners
 │ │ ├── compute_composite_scores.py Sector-relative composite quality score
 │ │ └── export_screener_output.py Generates screener_output.xlsx
-│ └── reports/
-│ ├── generate_radar_charts.py 92 radar/bar charts
-│ └── generate_peer_comparison.py Generates peer_comparison.xlsx
+│ ├── reports/
+│ │ ├── generate_radar_charts.py 92 radar/bar charts
+│ │ └── generate_peer_comparison.py Generates peer_comparison.xlsx
+│ └── dashboard/
+│ ├── app.py Streamlit entry point, sidebar navigation
+│ ├── utils/db.py 9 cached data-loading functions, TTM-safe
+│ └── pages/ 8 screen files (01_home.py – 08_reports.py)
 ├── config/
 │ └── screener_config.yaml 15 filterable metrics, analyst-editable
 ├── tests/
@@ -105,14 +125,17 @@ n100_financial_intelligence/
 │ ├── day12_spot_check.md Manual ROE/CAGR verification, 3 companies (Sprint 2)
 │ ├── sprint1_retro.md Sprint 1 retrospective + findings
 │ ├── sprint2_retro.md Sprint 2 retrospective + findings
-│ └── sprint3_retro.md Sprint 3 retrospective + findings
+│ ├── sprint3_retro.md Sprint 3 retrospective + findings
+│ └── sprint4_retro.md Sprint 4 retrospective + findings
 ├── output/
 │ ├── load_audit.csv Per-table row counts (Sprint 1)
 │ ├── validation_failures.csv All DQ rule violations, with severity (Sprint 1)
 │ ├── capital_allocation.csv 8-pattern label per company-year (Sprint 2)
 │ ├── ratio_edge_cases.log 54 categorized ROCE/ROE anomalies (Sprint 2)
 │ ├── screener_output.xlsx 6 preset sheets + Notes, colour-coded (Sprint 3)
-│ └── peer_comparison.xlsx 11 peer group sheets, colour-coded (Sprint 3)
+│ ├── peer_comparison.xlsx 11 peer group sheets, colour-coded (Sprint 3)
+│ ├── valuation_summary.xlsx 92 companies, valuation multiples + flags (Sprint 4)
+│ └── valuation_flags.csv 46 Caution/Discount flagged companies (Sprint 4)
 ├── reports/
 │ ├── pytest_report.html Full test suite HTML report (not committed)
 │ └── radar_charts/ 92 PNG charts, one per company (Sprint 3)
@@ -123,8 +146,9 @@ n100_financial_intelligence/
 ├── .env.template
 ├── Makefile
 └── README.md
-```
 
+
+```
 
 ## What's implemented
 
@@ -140,99 +164,83 @@ n100_financial_intelligence/
 ### Sprint 2 — Financial Ratio Engine (Days 8–14)
 
 - [x] `financial_ratios` table populated: 1,070 rows (non-TTM company-years)
-- [x] 30+ computed KPI columns: profitability, leverage, efficiency, CAGR (3/5/10yr), cash flow quality, composite quality score
-- [x] 44/44 KPI unit tests passing (exceeds spec's 20-test minimum)
-- [x] Manual spot-check: ROE and 5yr Revenue CAGR for 3 companies match hand-calculation within 0.1%
-- [x] `output/capital_allocation.csv` — 8-pattern classification, 1,063 rows
-- [x] `output/ratio_edge_cases.log` — 54 anomalies, every entry with a genuine investigated explanation
+- [x] 30+ computed KPI columns
+- [x] 44/44 KPI unit tests passing
+- [x] Manual spot-check within 0.1% tolerance
+- [x] `output/capital_allocation.csv`, `output/ratio_edge_cases.log`
 
 ### Sprint 3 — Screener & Peer Comparison Engine (Days 15–21)
 
-- [x] 6 preset screeners implemented — 5 of 6 return 5-50 companies naturally;
-      Value Pick returns 2 (investigated, confirmed genuine — see note below)
-- [x] `composite_quality_score` recomputed with full spec formula (sector-relative,
-      P10/P90 winsorized across 10 sectors)
-- [x] `output/screener_output.xlsx` — 6 preset sheets + explanatory Notes sheet, colour-coded
-- [x] `peer_percentiles` table — 560 rows, 56 companies × 10 metrics, all 11 peer groups
-- [x] 36 ungrouped companies correctly handled (no error, explicit "no peer group" status)
-- [x] Peer ranking correctness verified in both IT Services and FMCG groups —
-      highest-ROE company also shows highest percentile rank in each
-- [x] 92 radar/bar charts generated — 56 with peer group overlay, 36 standalone
-- [x] `output/peer_comparison.xlsx` — 11 sheets, colour-coded, benchmark-highlighted, median summary rows
-- [x] DQ test coverage closed: 17 tests now covering 15 of 16 rules (up from 8/7)
-- [x] 109/109 total unit tests passing project-wide
+- [x] 6 preset screeners implemented — Value Pick's narrow result investigated and confirmed genuine
+- [x] `composite_quality_score` recomputed with full sector-relative formula
+- [x] `output/screener_output.xlsx`, `output/peer_comparison.xlsx`
+- [x] Peer ranking correctness verified in IT Services and FMCG groups
+- [x] 92 radar/bar charts generated
+- [x] 17 DQ tests now covering 15 of 16 rules
 
-**Row count note (Sprint 2, still applies):** `financial_ratios` has
-1,070 rows against the spec's "≥1,100" target — a deliberate, correct
-exclusion of TTM rows. See `notebooks/sprint2_retro.md`.
+### Sprint 4 — Dashboard & Valuation Module (Days 22–28)
 
-**Value Pick note (Sprint 3):** Returns 2 companies against the spec's
-5-50 expected range. Investigated: the `market_cap` join is confirmed
-clean (92/92 companies have data). P/B<3 (10 pass) and P/E<20 (14 pass)
-are the binding constraints, not D/E or Dividend Yield (69/72 pass).
-Reflects genuine current valuation levels in the Nifty 100 — kept as
-specified rather than loosened. See `notebooks/sprint3_retro.md`.
+- [x] All 8 Streamlit screens functional, tested across 5+ sectors and known edge cases
+- [x] Company Profile loads under 3 seconds
+- [x] Screener CSV export produces valid, correctly-headed files
+- [x] Extreme filter values handled gracefully in both directions
+- [x] `output/valuation_summary.xlsx` — 92 rows, all required columns
+- [x] `output/valuation_flags.csv` — 46 flagged companies
+- [x] 5 real UI/logic bugs found and fixed (see `notebooks/sprint4_retro.md`)
+- [x] 109/109 project-wide tests passing, zero regressions from dashboard work
 
 ## Known data findings
 
 ### From Sprint 1 (see `notebooks/sprint1_retro.md`)
-
-- **TTM** rows recognized as a valid category, not forced into a fake fiscal year.
-- **8 companies** referenced in P&L/BS/CF have no matching entry in `companies.xlsx` — pending a team decision.
-- **AGTL → ATGL**: confirmed ticker typo in `cashflow.xlsx`, corrected via documented mapping.
-- **`opm_percentage`** unreliable for 21 companies (mainly Financials) — Ratio Engine computes OPM directly.
-- **SBIN** has zero rows in `balancesheet.xlsx` — an isolated source-data gap.
+TTM handling, 8 missing companies, AGTL→ATGL typo fix, unreliable `opm_percentage` for 21 companies, SBIN's missing balance sheet.
 
 ### From Sprint 2 (see `notebooks/sprint2_retro.md`)
-
-- **`financial_ratios` vs `financial_ratios_source`**: source table renamed and preserved for display/cross-check only.
-- **Small standalone equity base outliers** (HAL, BEL, INDIGO): `net_profit/equity_base > 5` guard required across all scoring modules.
-- **`operating_profit` reliability question** for CIPLA and COALINDIA — flagged for further scrutiny.
-- **Capital-employed definition gap** — ~15 companies show consistent ROCE differences vs source data.
+`financial_ratios` vs `financial_ratios_source` split, HAL/BEL/INDIGO small-equity-base outliers, CIPLA/COALINDIA operating_profit question, capital-employed definition gap vs source ROCE.
 
 ### From Sprint 3 (see `notebooks/sprint3_retro.md`)
+Debt-Free Blue Chip float-precision fix, Value Pick's genuine narrowness, sector exemption correction, Excel colour-coding bug fix, SBIN's graceful rendering in peer comparison.
 
-- **Debt-Free Blue Chip's exact `D/E == 0` filter was a real bug** — fixed
-  to `D/E < 0.01` after finding economically debt-free companies
-  (BAJAJHLDNG, BOSCHLTD, ITC, MARUTI) compute tiny non-zero D/E via float division.
-- **Value Pick's narrow result confirmed genuine**, not a bug — see note above.
-- **Sector exemption confirmed correct**: Sprint 3's screener includes 13
-  Financials-sector companies that Day 14's earlier, simpler preview had
-  wrongly excluded — a fix, not a regression.
-- **Excel colour-coding bug** (Day 20): traced to reading percentile
-  values back from written cells instead of the source DataFrame; fixed
-  by colouring directly from the DataFrame during the write pass.
-- **SBIN's known NULL balance-sheet data confirmed to render gracefully**
-  in `peer_comparison.xlsx` — blank BS-dependent cells, correctly
-  gold-highlighted as the Public Sector Banks benchmark.
+### From Sprint 4 (see `notebooks/sprint4_retro.md`)
+Average-vs-median ROE bug, dual-axis chart rendering bug (2 occurrences), slider type-mismatch crash, JIOFIN stub-year discovery, Discount/Caution threshold asymmetry (mathematically confirmed, not a bug), sector count correction (10, not 11) reconfirmed in the dashboard context.
 
 ## Tech Stack
 
-pandas, openpyxl, SQLite3, pytest, pytest-html, PyYAML, matplotlib
+pandas, openpyxl, SQLite3, pytest, pytest-html, PyYAML, matplotlib, streamlit, plotly
 
 ## Running individual components
 
 ```bash
 # Sprint 1
-python db/loader.py                                    # full ETL pipeline
-pytest tests/etl/test_normalise.py -v                   # normaliser tests only
-pytest tests/dq/test_rules.py -v                        # DQ rule tests only
+python db/loader.py
+pytest tests/etl/ -v
+pytest tests/dq/ -v
 
 # Sprint 2
-python src/analytics/populate_ratios.py                 # populate financial_ratios
-python src/analytics/generate_capital_allocation.py     # capital_allocation.csv
-python src/analytics/generate_edge_case_log.py          # ratio_edge_cases.log
-pytest tests/kpi/ -v                                     # all KPI tests
+python src/analytics/populate_ratios.py
+python src/analytics/generate_capital_allocation.py
+python src/analytics/generate_edge_case_log.py
+pytest tests/kpi/ -v
 
 # Sprint 3
-python src/screener/compute_composite_scores.py          # recompute composite scores
-python src/screener/export_screener_output.py             # screener_output.xlsx
-python src/analytics/peer.py                                # peer_percentiles table
-python src/reports/generate_radar_charts.py                  # 92 radar/bar charts
-python src/reports/generate_peer_comparison.py                # peer_comparison.xlsx
-pytest tests/screener/ -v                                       # screener + peer tests
+python src/screener/compute_composite_scores.py
+python src/screener/export_screener_output.py
+python src/analytics/peer.py
+python src/reports/generate_radar_charts.py
+python src/reports/generate_peer_comparison.py
+pytest tests/screener/ -v
+
+# Sprint 4
+python src/analytics/valuation.py
+streamlit run src/dashboard/app.py
 
 # Full suite
 pytest tests/ -v
 ```
 
+## Next: Sprint 5 — Intelligence & Reports (Days 29–35)
+
+Builds NLP/qualitative analysis, statistical clustering, and the
+automated PDF report generator (92 company tearsheets). Carries forward
+from Sprint 4: the `market_cap` join precision question, and from
+earlier sprints: CIPLA/COALINDIA's operating_profit reliability and the
+still-pending missing-companies/SBIN decisions.
