@@ -1,6 +1,6 @@
 # N100 Financial Intelligence Platform
 
-**Status:** Sprint 4 complete · **Sprint:** Days 1–28 of 45
+**Status:** Sprint 5 complete · **Sprint:** Days 1–35 of 45
 **Author:** Darshan Kumar · Bluestock Fintech Internship
 
 ## Overview
@@ -10,8 +10,11 @@ for 92 Nifty 100 companies. Sprint 1 (Days 1–7) built the data foundation.
 Sprint 2 (Days 8–14) built the Financial Ratio Engine. Sprint 3 (Days
 15–21) built the Investment Screener and Peer Comparison Engine. Sprint 4
 (Days 22–28) built an 8-screen Streamlit dashboard and the Valuation
-module — FCF yield, sector-relative overvaluation flags, and a live
-analyst-facing interface over everything built in the first three sprints.
+module. Sprint 5 (Days 29–35) built the NLP intelligence layer — auto
+pros/cons generation, cash flow intelligence, capital allocation
+reporting — and the automated PDF report generator: 92 company
+tearsheets, 10 sector reports, and a one-page-per-company portfolio
+summary.
 
 ## Quick Start
 
@@ -56,13 +59,27 @@ python src/analytics/valuation.py
 # 10. Launch the dashboard (Sprint 4)
 streamlit run src/dashboard/app.py
 
-# 11. Run the full test suite
+# 11. Run the NLP intelligence layer (Sprint 5)
+python src/nlp/parser.py
+python src/nlp/pros_cons_generator.py
+python src/analytics/cashflow_intelligence.py
+python src/analytics/capital_allocation_report.py
+
+# 12. Generate all PDF reports (Sprint 5)
+python src/reports/generate_tearsheets_batch.py
+python src/reports/sector_report.py
+python src/reports/portfolio_summary.py
+
+# 13. Run the full test suite
 pytest tests/ --html=reports/pytest_report.html --self-contained-html -v
 ```
 
 Expected result: dashboard opens at `http://localhost:8501` with 8
-navigable screens, `output/valuation_summary.xlsx` has 92 rows, 109/109
-unit tests pass.
+navigable screens, `output/pros_cons_generated.csv` covers all 92
+companies with ≥1 pro and ≥1 con, `output/cashflow_intelligence.xlsx`
+has 92 rows, `reports/tearsheets/` has 91 PDFs (JIOFIN skipped — <3yr
+history), `reports/sector/` has 10 PDFs, `reports/portfolio/` has one
+92-page PDF, 109/109 unit tests pass.
 
 ## Dashboard Screens
 
@@ -76,6 +93,14 @@ unit tests pass.
 | **Sector Analysis** | Bubble chart (Revenue × ROE × Market Cap, coloured by sub-sector), sector median KPI charts |
 | **Capital Allocation Map** | Treemap of all 92 companies by 8 capital allocation patterns, dropdown to browse companies within a pattern |
 | **Annual Reports** | Company search, clickable BSE PDF links, "Report unavailable" badge for missing links |
+
+## PDF Reports (Sprint 5)
+
+| Report | Location | Contents |
+|---|---|---|
+| **Company Tearsheet** | `reports/tearsheets/<TICKER>_tearsheet.pdf` | 2 pages: navy header, 6 KPI tiles, Revenue/Net Profit and ROE/ROCE charts, Balance Sheet composition, Cash Flow waterfall, auto-generated Pros/Cons, Capital Allocation badge. 91 of 92 companies (JIOFIN skipped, <3yr history) |
+| **Sector Report** | `reports/sector/<SECTOR>_report.pdf` | Sector median KPI summary + full company table (8 metrics each). 10 reports — see *Known data findings* below on the sector count |
+| **Portfolio Summary** | `reports/portfolio/portfolio_summary.pdf` | One page per company, alphabetical, top 6 KPIs with UP/DOWN/FLAT/N/A trend vs prior year. 92 pages |
 
 ## Project Structure
 ```
@@ -94,12 +119,19 @@ n100_financial_intelligence/
 │ ├── analytics/
 │ │ ├── ratios.py Profitability, leverage, efficiency ratios
 │ │ ├── cagr.py CAGR engine — 6 edge cases, TTM-safe
-│ │ ├── cashflow_kpis.py FCF, CFO quality, CapEx intensity, 8-pattern classifier
+│ │ ├── cashflow_kpis.py FCF, CFO quality, CapEx intensity, 8-pattern classifier,
+│ │ │ distress signal + deleveraging detection (Sprint 5)
 │ │ ├── populate_ratios.py Populates the financial_ratios table
 │ │ ├── generate_capital_allocation.py Generates capital_allocation.csv
 │ │ ├── generate_edge_case_log.py Cross-checks computed vs source ROCE/ROE
+│ │ ├── cashflow_intelligence.py Generates cashflow_intelligence.xlsx, distress_alerts.csv (Sprint 5)
+│ │ ├── capital_allocation_report.py Pattern distribution summary, pattern_changes.csv (Sprint 5)
 │ │ ├── peer.py Peer percentile rankings (11 groups, 10 metrics)
 │ │ └── valuation.py FCF yield, sector median P/E, overvaluation flags
+│ ├── nlp/
+│ │ ├── parser.py Regex parser for analysis.xlsx text fields (Sprint 5)
+│ │ ├── cross_validate_analysis.py Parsed vs computed CAGR cross-check (Sprint 5)
+│ │ └── pros_cons_generator.py 12+12 rules, 3-tier fallback system, confidence-scored (Sprint 5)
 │ ├── screener/
 │ │ ├── engine.py Filter engine — 15 metrics, sector exemptions
 │ │ ├── presets.py 6 preset screeners
@@ -107,7 +139,11 @@ n100_financial_intelligence/
 │ │ └── export_screener_output.py Generates screener_output.xlsx
 │ ├── reports/
 │ │ ├── generate_radar_charts.py 92 radar/bar charts
-│ │ └── generate_peer_comparison.py Generates peer_comparison.xlsx
+│ │ ├── generate_peer_comparison.py Generates peer_comparison.xlsx
+│ │ ├── tearsheet.py 2-page company tearsheet template (Sprint 5)
+│ │ ├── generate_tearsheets_batch.py Batch runner, all 92 companies (Sprint 5)
+│ │ ├── sector_report.py One PDF per sector (Sprint 5)
+│ │ └── portfolio_summary.py One-page-per-company portfolio PDF (Sprint 5)
 │ └── dashboard/
 │ ├── app.py Streamlit entry point, sidebar navigation
 │ ├── utils/db.py 9 cached data-loading functions, TTM-safe
@@ -126,7 +162,8 @@ n100_financial_intelligence/
 │ ├── sprint1_retro.md Sprint 1 retrospective + findings
 │ ├── sprint2_retro.md Sprint 2 retrospective + findings
 │ ├── sprint3_retro.md Sprint 3 retrospective + findings
-│ └── sprint4_retro.md Sprint 4 retrospective + findings
+│ ├── sprint4_retro.md Sprint 4 retrospective + findings
+│ └── sprint5_retro.md Sprint 5 retrospective + findings
 ├── output/
 │ ├── load_audit.csv Per-table row counts (Sprint 1)
 │ ├── validation_failures.csv All DQ rule violations, with severity (Sprint 1)
@@ -135,10 +172,22 @@ n100_financial_intelligence/
 │ ├── screener_output.xlsx 6 preset sheets + Notes, colour-coded (Sprint 3)
 │ ├── peer_comparison.xlsx 11 peer group sheets, colour-coded (Sprint 3)
 │ ├── valuation_summary.xlsx 92 companies, valuation multiples + flags (Sprint 4)
-│ └── valuation_flags.csv 46 Caution/Discount flagged companies (Sprint 4)
+│ ├── valuation_flags.csv 46 Caution/Discount flagged companies (Sprint 4)
+│ ├── analysis_parsed.csv Structured CAGR values from analysis.xlsx (Sprint 5)
+│ ├── parse_failures.csv Unmatched text entries, 0 rows (Sprint 5)
+│ ├── analysis_cross_validation.csv Parsed vs computed CAGR comparison (Sprint 5)
+│ ├── pros_cons_generated.csv Pros/cons for all 92 companies, confidence-scored (Sprint 5)
+│ ├── cashflow_intelligence.xlsx CFO quality, CapEx intensity, distress/deleveraging flags (Sprint 5)
+│ ├── distress_alerts.csv Companies with CFO<0 AND CFF>0 (Sprint 5)
+│ ├── pattern_distribution_summary.csv Capital allocation pattern counts, latest year (Sprint 5)
+│ ├── pattern_changes.csv Year-over-year pattern transitions per company (Sprint 5)
+│ └── skipped_tearsheets.csv Companies skipped from batch tearsheet generation (Sprint 5)
 ├── reports/
 │ ├── pytest_report.html Full test suite HTML report (not committed)
-│ └── radar_charts/ 92 PNG charts, one per company (Sprint 3)
+│ ├── radar_charts/ 92 PNG charts, one per company (Sprint 3)
+│ ├── tearsheets/ 91 company tearsheet PDFs, 2 pages each (Sprint 5)
+│ ├── sector/ 10 sector PDFs (Sprint 5)
+│ └── portfolio/ 1 portfolio summary PDF, 92 pages (Sprint 5)
 ├── dev_notes/diagnostics/ Investigation scripts (see its README)
 ├── docs/
 │ └── Nifty100_Project_Document_FINAL.pdf Master spec
@@ -146,7 +195,6 @@ n100_financial_intelligence/
 ├── .env.template
 ├── Makefile
 └── README.md
-
 
 ```
 
@@ -189,6 +237,19 @@ n100_financial_intelligence/
 - [x] 5 real UI/logic bugs found and fixed (see `notebooks/sprint4_retro.md`)
 - [x] 109/109 project-wide tests passing, zero regressions from dashboard work
 
+### Sprint 5 — Intelligence, NLP & PDF Reports (Days 29–35)
+
+- [x] `output/analysis_parsed.csv` — 64 rows, 0 parse failures, cross-validated against computed CAGR
+- [x] `output/pros_cons_generated.csv` — all 92 companies have ≥1 pro and ≥1 con (560 rows), via 12+12 primary rules plus a documented 3-tier fallback system, no fabricated signals
+- [x] `output/cashflow_intelligence.xlsx` — 92 rows, all required columns, `cfo_quality_label` correctly derived (was never populated by any prior script)
+- [x] `output/distress_alerts.csv` — 13 companies flagged
+- [x] `output/pattern_distribution_summary.csv`, `output/pattern_changes.csv` — capital allocation audit and year-over-year change tracking
+- [x] `reports/tearsheets/` — 91 of 92 PDFs (JIOFIN skipped, <3yr history), all 83.5–148.5 KB, well above the 30KB floor
+- [x] `reports/sector/` — 10 PDFs (real sector count, not the spec's literal 11 — see findings below), verified via direct text extraction
+- [x] `reports/portfolio/portfolio_summary.pdf` — 92 pages, UP/DOWN/FLAT trend indicators
+- [x] 7 real bugs found and fixed (see `notebooks/sprint5_retro.md`)
+- [x] 109/109 project-wide tests passing, zero regressions from any Sprint 5 work
+
 ## Known data findings
 
 ### From Sprint 1 (see `notebooks/sprint1_retro.md`)
@@ -203,9 +264,12 @@ Debt-Free Blue Chip float-precision fix, Value Pick's genuine narrowness, sector
 ### From Sprint 4 (see `notebooks/sprint4_retro.md`)
 Average-vs-median ROE bug, dual-axis chart rendering bug (2 occurrences), slider type-mismatch crash, JIOFIN stub-year discovery, Discount/Caution threshold asymmetry (mathematically confirmed, not a bug), sector count correction (10, not 11) reconfirmed in the dashboard context.
 
+### From Sprint 5 (see `notebooks/sprint5_retro.md`)
+`financial_ratios` has no `pe_ratio` column (only `market_cap` does) — a fallback rule was silently dead until traced; `cfo_quality_label` was never populated by any pipeline script despite the underlying ratio being correct; `balancesheet` contains 127 interim/quarterly rows mixed into annual data (SIEMENS genuinely reports on a September fiscal year, confirmed consistent across both `balancesheet` and `financial_ratios`); Excel silently upcasts a boolean column containing `None` to `1.0`/`0.0`/`NaN`, and `"N/A"` collides with pandas' default missing-value list on read-back; ReportLab's default font doesn't support Unicode arrow glyphs; insurance-sector ROCE outliers (HDFCLIFE 646%, ICICIPRULI 754%, ICICIGI 145%) found but not yet guarded against — same root cause as HAL/BEL/INDIGO, different sector; 10 sector PDFs generated, not the spec's literal 11, consistent with the already-confirmed sector count.
+
 ## Tech Stack
 
-pandas, openpyxl, SQLite3, pytest, pytest-html, PyYAML, matplotlib, streamlit, plotly
+pandas, openpyxl, SQLite3, pytest, pytest-html, PyYAML, matplotlib, streamlit, plotly, ReportLab, pdfplumber (dev/verification only)
 
 ## Running individual components
 
@@ -233,14 +297,29 @@ pytest tests/screener/ -v
 python src/analytics/valuation.py
 streamlit run src/dashboard/app.py
 
+# Sprint 5
+python src/nlp/parser.py
+python src/nlp/pros_cons_generator.py
+python src/analytics/cashflow_intelligence.py
+python src/analytics/capital_allocation_report.py
+python src/reports/generate_tearsheets_batch.py
+python src/reports/sector_report.py
+python src/reports/portfolio_summary.py
+pytest tests/kpi/test_cashflow_kpis.py -v
+
 # Full suite
 pytest tests/ -v
 ```
 
-## Next: Sprint 5 — Intelligence & Reports (Days 29–35)
+## Next: Sprint 6 (not yet started)
 
-Builds NLP/qualitative analysis, statistical clustering, and the
-automated PDF report generator (92 company tearsheets). Carries forward
-from Sprint 4: the `market_cap` join precision question, and from
-earlier sprints: CIPLA/COALINDIA's operating_profit reliability and the
-still-pending missing-companies/SBIN decisions.
+Per the master spec: KMeans clustering, a FastAPI REST server (16
+endpoints), a final full test suite (60+ tests targeted — already at
+109), final documentation/analyst guide, and acceptance sign-off. Exact
+day-by-day task list not yet provided by the team lead.
+
+Carried forward from Sprint 5: the insurance-sector ROCE outlier finding
+(not yet guarded against in any rule). From earlier sprints: CIPLA/
+COALINDIA's operating_profit reliability, the 8 missing companies, and
+SBIN's missing balance sheet — all still pending a decision from outside
+this project.

@@ -1,6 +1,14 @@
 """
 N100 Financial Intelligence Platform
 Sprint 2, Day 11: Cash Flow KPIs & Capital Allocation Classifier
+Sprint 5, Day 31: Distress Signal & Deleveraging Detection (appended below,
+existing functions unchanged)
+
+2026-09 refactor: cfo_quality_score()'s labeling thresholds extracted into
+_cfo_quality_label() so cashflow_intelligence.py can apply the same
+thresholds to a pre-computed ratio (financial_ratios.cfo_pat_ratio_5yr)
+without duplicating threshold logic in two places. Pure refactor -- no
+behavior change, cfo_quality_score()'s return values are identical.
 """
 
 
@@ -9,6 +17,16 @@ def free_cash_flow(operating_activity, investing_activity):
     if operating_activity is None or investing_activity is None:
         return None
     return operating_activity + investing_activity
+
+
+def _cfo_quality_label(avg_ratio):
+    """Shared thresholds: >1.0 High Quality, 0.5-1.0 Moderate, <0.5 Accrual Risk."""
+    if avg_ratio > 1.0:
+        return "High Quality"
+    elif avg_ratio >= 0.5:
+        return "Moderate"
+    else:
+        return "Accrual Risk"
 
 
 def cfo_quality_score(cfo_values_5yr, pat_values_5yr):
@@ -27,13 +45,7 @@ def cfo_quality_score(cfo_values_5yr, pat_values_5yr):
         return None, None
 
     avg_ratio = sum(ratios) / len(ratios)
-
-    if avg_ratio > 1.0:
-        label = "High Quality"
-    elif avg_ratio >= 0.5:
-        label = "Moderate"
-    else:
-        label = "Accrual Risk"
+    label = _cfo_quality_label(avg_ratio)
 
     return avg_ratio, label
 
@@ -126,3 +138,40 @@ def classify_capital_allocation(cfo, cfi, cff, cfo_over_pat=None):
         return "Undetermined"
 
     return "Undetermined"
+
+
+# ============================================================
+# SPRINT 5, DAY 31 ADDITIONS
+# ============================================================
+
+def detect_distress_signal(cfo, cff):
+    """
+    Flags CFO < 0 AND CFF > 0 in the latest year -- raising cash from
+    financing while operations burn cash.
+
+    Deliberately independent of classify_capital_allocation()'s
+    "Distress Signal" pattern label -- that label is the narrower
+    3-variable (-,+,+) sign combination. This function implements the
+    spec's plain 2-variable definition instead, which also correctly
+    catches (-,-,+) "Growth Funded by Debt" companies -- companies the
+    classifier's existing label alone would miss. Confirmed intentional
+    naming overlap; documented here and in the Day 31 retro notes so
+    the two are never confused as the same check.
+
+    Returns True/False, or None if either input is missing.
+    """
+    if cfo is None or cff is None:
+        return None
+    return cfo < 0 and cff > 0
+
+
+def detect_deleveraging(cff, borrowings_current, borrowings_prior):
+    """
+    Flags CFF < 0 AND borrowings declining year-over-year -- actively
+    paying down debt.
+
+    Returns True/False, or None if any input is missing.
+    """
+    if cff is None or borrowings_current is None or borrowings_prior is None:
+        return None
+    return cff < 0 and borrowings_current < borrowings_prior
