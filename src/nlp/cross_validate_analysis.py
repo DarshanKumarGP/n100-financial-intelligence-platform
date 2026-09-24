@@ -10,6 +10,7 @@ comparison, not force-matched to a wrong window.
 """
 
 import sqlite3
+
 import pandas as pd
 
 DB_PATH = "data/nifty100.db"
@@ -21,11 +22,12 @@ METRIC_TO_COLUMN = {
 
 
 def main():
+    """CLI entry point: cross-validate parser.py's parsed CAGR values against the Ratio Engine's computed CAGR and flag divergences over 5%."""
     parsed = pd.read_csv("output/analysis_parsed.csv")
     comparable = parsed[
-        (parsed["period_label"] == "years") &
-        (parsed["metric_type"].isin(METRIC_TO_COLUMN.keys())) &
-        (parsed["period_years"].isin([3, 5, 10]))
+        (parsed["period_label"] == "years")
+        & (parsed["metric_type"].isin(METRIC_TO_COLUMN.keys()))
+        & (parsed["period_years"].isin([3, 5, 10]))
     ]
 
     conn = sqlite3.connect(DB_PATH)
@@ -35,13 +37,16 @@ def main():
         col_template = METRIC_TO_COLUMN[row["metric_type"]]
         computed_col = col_template.format(p=int(row["period_years"]))
 
-        computed = conn.execute(f"""
+        computed = conn.execute(
+            f"""
             SELECT {computed_col} FROM financial_ratios
             WHERE company_id = ? AND year = (
                 SELECT MAX(y2.year) FROM financial_ratios y2
                 WHERE y2.company_id = financial_ratios.company_id AND y2.year != 'TTM'
             )
-        """, (row["company_id"],)).fetchone()
+        """,
+            (row["company_id"],),
+        ).fetchone()
 
         computed_value = computed[0] if computed else None
 
@@ -52,12 +57,17 @@ def main():
             diff_pct = None
             flagged = None
 
-        results.append({
-            "company_id": row["company_id"], "metric_type": row["metric_type"],
-            "period_years": row["period_years"], "parsed_value_pct": row["value_pct"],
-            "computed_value_pct": computed_value, "abs_diff_pct": diff_pct,
-            "flagged_divergence": flagged,
-        })
+        results.append(
+            {
+                "company_id": row["company_id"],
+                "metric_type": row["metric_type"],
+                "period_years": row["period_years"],
+                "parsed_value_pct": row["value_pct"],
+                "computed_value_pct": computed_value,
+                "abs_diff_pct": diff_pct,
+                "flagged_divergence": flagged,
+            }
+        )
 
     conn.close()
 

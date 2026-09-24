@@ -3,13 +3,17 @@ N100 Financial Intelligence Platform
 Sprint 4, Day 25: Capital Allocation Map
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+import sys
 
-import streamlit as st
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils")
+)
+
 import pandas as pd
 import plotly.express as px
+import streamlit as st
+
 from db import _connect
 
 st.title("Capital Allocation Map")
@@ -27,15 +31,20 @@ pattern_counts = alloc_latest["pattern_label"].value_counts().reset_index()
 pattern_counts.columns = ["pattern_label", "count"]
 
 fig = px.treemap(
-    alloc_latest, path=["pattern_label", "company_id"],
+    alloc_latest,
+    path=["pattern_label", "company_id"],
     title="Capital Allocation Patterns — Latest Year per Company",
 )
-fig.update_layout(height=600, margin=dict(t=40, b=10))
+fig.update_layout(height=600, margin={"t": 40, "b": 10})
 st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 
 st.subheader("Browse by Pattern")
-selected_pattern = st.selectbox("Select a pattern to see the company list", pattern_counts["pattern_label"].tolist())
-pattern_companies = alloc_latest[alloc_latest["pattern_label"] == selected_pattern][["company_id", "company_name", "cfo_sign", "cfi_sign", "cff_sign"]]
+selected_pattern = st.selectbox(
+    "Select a pattern to see the company list", pattern_counts["pattern_label"].tolist()
+)
+pattern_companies = alloc_latest[alloc_latest["pattern_label"] == selected_pattern][
+    ["company_id", "company_name", "cfo_sign", "cfi_sign", "cff_sign"]
+]
 st.dataframe(pattern_companies, hide_index=True, use_container_width=True)

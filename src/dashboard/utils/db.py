@@ -8,6 +8,7 @@ rolling 12-month window, not a fixed fiscal year-end (Sprint 2 Finding
 """
 
 import sqlite3
+
 import pandas as pd
 import streamlit as st
 
@@ -22,14 +23,17 @@ def _connect():
 def get_companies():
     """All 92 companies with sector info."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT c.id, c.company_name, c.about_company, c.face_value,
                c.book_value, c.roce_percentage, c.roe_percentage,
                s.broad_sector, s.sub_sector, s.market_cap_category
         FROM companies c
         LEFT JOIN sectors s ON c.id = s.company_id
         ORDER BY c.company_name
-    """, conn)
+    """,
+        conn,
+    )
     conn.close()
     return df
 
@@ -43,16 +47,24 @@ def get_ratios(ticker, year=None):
     """
     conn = _connect()
     if year is None:
-        df = pd.read_sql("""
+        df = pd.read_sql(
+            """
             SELECT * FROM financial_ratios
             WHERE company_id = ? AND year != 'TTM'
             ORDER BY year DESC LIMIT 1
-        """, conn, params=(ticker,))
+        """,
+            conn,
+            params=(ticker,),
+        )
     else:
-        df = pd.read_sql("""
+        df = pd.read_sql(
+            """
             SELECT * FROM financial_ratios
             WHERE company_id = ? AND year = ?
-        """, conn, params=(ticker, year))
+        """,
+            conn,
+            params=(ticker, year),
+        )
     conn.close()
     return df
 
@@ -61,11 +73,15 @@ def get_ratios(ticker, year=None):
 def get_ratios_history(ticker):
     """Full non-TTM fiscal year history of financial_ratios for one company."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT * FROM financial_ratios
         WHERE company_id = ? AND year != 'TTM'
         ORDER BY year ASC
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -74,11 +90,15 @@ def get_ratios_history(ticker):
 def get_pl(ticker):
     """Full P&L history, non-TTM years only, chronological."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT * FROM profitandloss
         WHERE company_id = ? AND year != 'TTM'
         ORDER BY year ASC
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -87,11 +107,15 @@ def get_pl(ticker):
 def get_bs(ticker):
     """Full balance sheet history. May be empty for SBIN (Sprint 1 Finding 8)."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT * FROM balancesheet
         WHERE company_id = ?
         ORDER BY year ASC
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -100,11 +124,15 @@ def get_bs(ticker):
 def get_cf(ticker):
     """Full cash flow history."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT * FROM cashflow
         WHERE company_id = ? AND year != 'TTM'
         ORDER BY year ASC
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -119,12 +147,15 @@ def get_sectors():
     not force an empty 11th slice.
     """
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT broad_sector, COUNT(*) as company_count
         FROM sectors
         GROUP BY broad_sector
         ORDER BY company_count DESC
-    """, conn)
+    """,
+        conn,
+    )
     conn.close()
     return df
 
@@ -133,7 +164,8 @@ def get_sectors():
 def get_peers(group_name):
     """All companies in a peer group, with their percentile ranks."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT pg.company_id, c.company_name, pg.is_benchmark,
                pp.metric, pp.value, pp.percentile_rank
         FROM peer_groups pg
@@ -141,7 +173,10 @@ def get_peers(group_name):
         LEFT JOIN peer_percentiles pp ON pg.company_id = pp.company_id
             AND pg.peer_group_name = pp.peer_group_name
         WHERE pg.peer_group_name = ?
-    """, conn, params=(group_name,))
+    """,
+        conn,
+        params=(group_name,),
+    )
     conn.close()
     return df
 
@@ -156,11 +191,15 @@ def get_valuation(ticker):
     -- see Sprint 3 retro for detail.
     """
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT mc.* FROM market_cap mc
         WHERE mc.company_id = ?
         ORDER BY mc.year DESC LIMIT 1
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -169,7 +208,11 @@ def get_valuation(ticker):
 def get_pros_cons(ticker):
     """Pros/cons text for a company. May be empty (only ~8 companies covered)."""
     conn = _connect()
-    df = pd.read_sql("SELECT pros, cons FROM prosandcons WHERE company_id = ?", conn, params=(ticker,))
+    df = pd.read_sql(
+        "SELECT pros, cons FROM prosandcons WHERE company_id = ?",
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df
 
@@ -178,9 +221,13 @@ def get_pros_cons(ticker):
 def get_documents(ticker):
     """Annual report links for a company."""
     conn = _connect()
-    df = pd.read_sql("""
+    df = pd.read_sql(
+        """
         SELECT report_year, annual_report FROM documents
         WHERE company_id = ? ORDER BY report_year DESC
-    """, conn, params=(ticker,))
+    """,
+        conn,
+        params=(ticker,),
+    )
     conn.close()
     return df

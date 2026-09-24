@@ -144,6 +144,7 @@ def classify_capital_allocation(cfo, cfi, cff, cfo_over_pat=None):
 # SPRINT 5, DAY 31 ADDITIONS
 # ============================================================
 
+
 def detect_distress_signal(cfo, cff):
     """
     Flags CFO < 0 AND CFF > 0 in the latest year -- raising cash from

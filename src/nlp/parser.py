@@ -21,9 +21,10 @@ by inspecting all 16 rows directly, not guessed):
   would silently drop the minus sign; fixed by including it explicitly.
 """
 
+import os
 import re
 import sqlite3
-import os
+
 import pandas as pd
 
 DB_PATH = "data/nifty100.db"
@@ -80,6 +81,7 @@ def parse_single_value(raw_text):
 
 
 def main():
+    """CLI entry point: parse analysis.xlsx's text fields and write output/analysis_parsed.csv and output/parse_failures.csv."""
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
         "SELECT entry_id, company_id, compounded_sales_growth, "
@@ -103,17 +105,25 @@ def main():
             result = parse_single_value(raw_text)
 
             if result is None:
-                failure_records.append({
-                    "entry_id": entry_id, "company_id": company_id,
-                    "column": col_name, "raw_value": raw_text,
-                })
+                failure_records.append(
+                    {
+                        "entry_id": entry_id,
+                        "company_id": company_id,
+                        "column": col_name,
+                        "raw_value": raw_text,
+                    }
+                )
             else:
                 period_years, value_pct, period_label = result
-                parsed_records.append({
-                    "company_id": company_id, "metric_type": metric_type,
-                    "period_years": period_years, "value_pct": value_pct,
-                    "period_label": period_label,
-                })
+                parsed_records.append(
+                    {
+                        "company_id": company_id,
+                        "metric_type": metric_type,
+                        "period_years": period_years,
+                        "value_pct": value_pct,
+                        "period_label": period_label,
+                    }
+                )
 
     os.makedirs("output", exist_ok=True)
 
@@ -129,9 +139,15 @@ def main():
         print("\nFailed entries:")
         print(failures_df.to_string())
 
-    print(f"\nDistinct companies covered: {parsed_df['company_id'].nunique() if len(parsed_df) else 0}")
-    print(f"\nPeriod label distribution:")
-    print(parsed_df["period_label"].value_counts().to_string() if len(parsed_df) else "none")
+    print(
+        f"\nDistinct companies covered: {parsed_df['company_id'].nunique() if len(parsed_df) else 0}"
+    )
+    print("\nPeriod label distribution:")
+    print(
+        parsed_df["period_label"].value_counts().to_string()
+        if len(parsed_df)
+        else "none"
+    )
 
     return parsed_df
 

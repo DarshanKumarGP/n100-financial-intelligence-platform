@@ -10,20 +10,29 @@ Two passes:
             only be computed after Pass 1 has all raw values in hand.
 """
 
-import sys
 import os
 import sqlite3
+import sys
+
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ratios import (
-    net_profit_margin, operating_profit_margin, return_on_equity,
-    return_on_capital_employed, return_on_assets, debt_to_equity,
-    high_leverage_flag, interest_coverage, icr_label, icr_warning_flag,
-    net_debt, asset_turnover,
-)
 from cagr import windowed_cagr
-from cashflow_kpis import free_cash_flow, capex_intensity, fcf_conversion_rate
+from cashflow_kpis import capex_intensity, fcf_conversion_rate, free_cash_flow
+from ratios import (
+    asset_turnover,
+    debt_to_equity,
+    high_leverage_flag,
+    icr_label,
+    icr_warning_flag,
+    interest_coverage,
+    net_debt,
+    net_profit_margin,
+    operating_profit_margin,
+    return_on_assets,
+    return_on_capital_employed,
+    return_on_equity,
+)
 
 DB_PATH = "data/nifty100.db"
 
@@ -57,7 +66,9 @@ def load_merged_data(conn):
     """
     df = pd.read_sql(query, conn)
 
-    sectors = dict(conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall())
+    sectors = dict(
+        conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall()
+    )
     df["broad_sector"] = df["company_id"].map(sectors)
 
     return df
@@ -70,7 +81,13 @@ def book_value_per_share(equity_capital, reserves, face_value):
     None if face_value or equity_capital is missing/zero -- can't derive
     share count without them.
     """
-    if equity_capital is None or reserves is None or face_value is None or face_value == 0 or equity_capital == 0:
+    if (
+        equity_capital is None
+        or reserves is None
+        or face_value is None
+        or face_value == 0
+        or equity_capital == 0
+    ):
         return None
     shares_outstanding = equity_capital / face_value
     return (equity_capital + reserves) / shares_outstanding
@@ -82,14 +99,19 @@ def compute_row_ratios(row, is_financials):
     opm = operating_profit_margin(row["operating_profit"], row["sales"])
     roe = return_on_equity(row["net_profit"], row["equity_capital"], row["reserves"])
     roce = return_on_capital_employed(
-        row["operating_profit"], row["depreciation"],
-        row["equity_capital"], row["reserves"], row["borrowings"]
+        row["operating_profit"],
+        row["depreciation"],
+        row["equity_capital"],
+        row["reserves"],
+        row["borrowings"],
     )
     roa = return_on_assets(row["net_profit"], row["total_assets"])
 
     de = debt_to_equity(row["borrowings"], row["equity_capital"], row["reserves"])
     hlf = high_leverage_flag(de, is_financials)
-    icr = interest_coverage(row["operating_profit"], row["other_income"], row["interest"])
+    icr = interest_coverage(
+        row["operating_profit"], row["other_income"], row["interest"]
+    )
     icr_lbl = icr_label(icr, row["interest"])
     icr_warn = icr_warning_flag(icr)
     ndebt = net_debt(row["borrowings"], row["investments"])
@@ -97,10 +119,12 @@ def compute_row_ratios(row, is_financials):
 
     fcf = free_cash_flow(row["cfo"], row["cfi"])
     capex = abs(row["cfi"]) if row["cfi"] is not None else None
-    capex_int, capex_label = capex_intensity(row["cfi"], row["sales"])
+    _capex_int, capex_label = capex_intensity(row["cfi"], row["sales"])
     fcf_conv = fcf_conversion_rate(fcf, row["operating_profit"])
 
-    bvps = book_value_per_share(row["equity_capital"], row["reserves"], row["face_value"])
+    bvps = book_value_per_share(
+        row["equity_capital"], row["reserves"], row["face_value"]
+    )
 
     return {
         "net_profit_margin_pct": npm,
@@ -155,13 +179,20 @@ def compute_company_cagrs(company_df):
         eps5, eps5f = windowed_cagr(eps_asof, 5)
 
         results[target_year] = {
-            "revenue_cagr_3yr": rev3, "revenue_cagr_3yr_flag": rev3f,
-            "revenue_cagr_5yr": rev5, "revenue_cagr_5yr_flag": rev5f,
-            "revenue_cagr_10yr": rev10, "revenue_cagr_10yr_flag": rev10f,
-            "pat_cagr_3yr": pat3, "pat_cagr_3yr_flag": pat3f,
-            "pat_cagr_5yr": pat5, "pat_cagr_5yr_flag": pat5f,
-            "pat_cagr_10yr": pat10, "pat_cagr_10yr_flag": pat10f,
-            "eps_cagr_5yr": eps5, "eps_cagr_5yr_flag": eps5f,
+            "revenue_cagr_3yr": rev3,
+            "revenue_cagr_3yr_flag": rev3f,
+            "revenue_cagr_5yr": rev5,
+            "revenue_cagr_5yr_flag": rev5f,
+            "revenue_cagr_10yr": rev10,
+            "revenue_cagr_10yr_flag": rev10f,
+            "pat_cagr_3yr": pat3,
+            "pat_cagr_3yr_flag": pat3f,
+            "pat_cagr_5yr": pat5,
+            "pat_cagr_5yr_flag": pat5f,
+            "pat_cagr_10yr": pat10,
+            "pat_cagr_10yr_flag": pat10f,
+            "eps_cagr_5yr": eps5,
+            "eps_cagr_5yr_flag": eps5f,
         }
 
     return results
@@ -181,6 +212,7 @@ def winsorized_score(value, p10, p90, invert=False):
 
 
 def main():
+    """CLI entry point: compute and populate the financial_ratios table for all companies and years."""
     conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON;")
 
@@ -190,11 +222,13 @@ def main():
     conn.commit()
 
     df = load_merged_data(conn)
-    print(f"Loaded {len(df)} merged company-year rows (P&L outer-joined with BS/CF/companies)")
+    print(
+        f"Loaded {len(df)} merged company-year rows (P&L outer-joined with BS/CF/companies)"
+    )
 
     all_rows = []
     for company_id, company_df in df.groupby("company_id"):
-        is_financials = (company_df["broad_sector"].iloc[0] == "Financials")
+        is_financials = company_df["broad_sector"].iloc[0] == "Financials"
         company_df = company_df.sort_values("year").reset_index(drop=True)
         cagr_by_year = compute_company_cagrs(company_df)
 
@@ -211,16 +245,32 @@ def main():
 
     # Pass 2: composite_quality_score, needs population-wide P10/P90
     p10_90 = {}
-    for col in ["return_on_equity_pct", "free_cash_flow_cr",
-                "return_on_capital_employed_pct", "debt_to_equity"]:
+    for col in [
+        "return_on_equity_pct",
+        "free_cash_flow_cr",
+        "return_on_capital_employed_pct",
+        "debt_to_equity",
+    ]:
         valid = result_df[col].dropna()
-        p10_90[col] = (valid.quantile(0.10), valid.quantile(0.90)) if len(valid) > 0 else (None, None)
+        p10_90[col] = (
+            (valid.quantile(0.10), valid.quantile(0.90))
+            if len(valid) > 0
+            else (None, None)
+        )
 
     def composite(row):
-        roe_s = winsorized_score(row["return_on_equity_pct"], *p10_90["return_on_equity_pct"])
+        """Compute a company's sector-relative composite quality score from its individual ratio percentiles."""
+        roe_s = winsorized_score(
+            row["return_on_equity_pct"], *p10_90["return_on_equity_pct"]
+        )
         fcf_s = winsorized_score(row["free_cash_flow_cr"], *p10_90["free_cash_flow_cr"])
-        roce_s = winsorized_score(row["return_on_capital_employed_pct"], *p10_90["return_on_capital_employed_pct"])
-        de_s = winsorized_score(row["debt_to_equity"], *p10_90["debt_to_equity"], invert=True)
+        roce_s = winsorized_score(
+            row["return_on_capital_employed_pct"],
+            *p10_90["return_on_capital_employed_pct"],
+        )
+        de_s = winsorized_score(
+            row["debt_to_equity"], *p10_90["debt_to_equity"], invert=True
+        )
 
         parts = [(roe_s, 0.30), (fcf_s, 0.25), (roce_s, 0.25), (de_s, 0.20)]
         valid_parts = [(s, w) for s, w in parts if s is not None]

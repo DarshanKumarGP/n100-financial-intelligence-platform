@@ -1,0 +1,46 @@
+N100 Financial Intelligence Platform -- Final Deliverables Manifest
+======================================================================
+
+Archived 32 of 32 listed deliverables.
+Note: the Sprint 6 spec states '23 deliverables' but no single
+itemized list of exactly 23 exists anywhere in this project's
+history. The real, confirmed deliverable set (this manifest) has
+32 distinct items across all 6 sprints -- likely because
+the spec bundles some multi-file outputs as single line items.
+Documented here rather than trimmed to force a match, consistent
+with this project's handling of the sector-count (10 vs 11) and
+tearsheet-count (91 vs 92) discrepancies.
+
+Archived:
+  sprint1/load_audit.csv  (0.2 KB)
+  sprint1/validation_failures.csv  (75.5 KB)
+  sprint2/capital_allocation.csv  (38.6 KB)
+  sprint2/ratio_edge_cases.log  (20.8 KB)
+  sprint3/screener_output.xlsx  (35.8 KB)
+  sprint3/peer_comparison.xlsx  (25.9 KB)
+  sprint3/radar_charts/  (92 files)
+  sprint4/valuation_summary.xlsx  (13.1 KB)
+  sprint4/valuation_flags.csv  (5.4 KB)
+  sprint5/analysis_parsed.csv  (2.2 KB)
+  sprint5/parse_failures.csv  (0.0 KB)
+  sprint5/analysis_cross_validation.csv  (1.8 KB)
+  sprint5/pros_cons_generated.csv  (61.7 KB)
+  sprint5/cashflow_intelligence.xlsx  (13.4 KB)
+  sprint5/distress_alerts.csv  (0.4 KB)
+  sprint5/pattern_distribution_summary.csv  (0.2 KB)
+  sprint5/pattern_changes.csv  (26.3 KB)
+  sprint5/skipped_tearsheets.csv  (0.1 KB)
+  sprint5/tearsheets/  (91 files)
+  sprint5/sector/  (10 files)
+  sprint5/portfolio/  (1 files)
+  sprint6/cluster_labels.csv  (5.0 KB)
+  sprint6/elbow_plot.png  (44.1 KB)
+  sprint6/correlation_heatmap.png  (197.5 KB)
+  sprint6/outlier_report.csv  (1.0 KB)
+  sprint6/portfolio_stats.csv  (1.5 KB)
+  sprint6/api/  (20 files)
+  sprint6/openapi.json  (10.3 KB)
+  sprint6/N100 Financial Intelligence Platform API.postman_collection.json  (87.4 KB)
+  sprint6/pytest_report.html  (122.6 KB)
+  sprint6/analyst_guide.pdf  (20.6 KB)
+  sprint6/perf_notes.md  (4.9 KB)

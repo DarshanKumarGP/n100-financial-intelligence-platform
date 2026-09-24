@@ -12,13 +12,17 @@ blanks in those columns even though it's correctly gold-highlighted.
 This is expected, not a bug in this report.
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "analytics"))
+import sys
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "analytics")
+)
 
 import sqlite3
+
 import pandas as pd
-from openpyxl.styles import PatternFill, Font
+from openpyxl.styles import Font, PatternFill
 
 DB_PATH = "data/nifty100.db"
 OUTPUT_PATH = "output/peer_comparison.xlsx"
@@ -44,6 +48,7 @@ RANKED_METRICS = [
 
 
 def load_peer_data(conn):
+    """Load each peer group's member companies and their latest-year metric values."""
     query = """
         SELECT fr.company_id, c.company_name, pg.peer_group_name, pg.is_benchmark,
                fr.return_on_equity_pct, fr.return_on_capital_employed_pct,
@@ -62,7 +67,11 @@ def load_peer_data(conn):
 
 
 def load_percentiles(conn):
-    return pd.read_sql("SELECT company_id, peer_group_name, metric, percentile_rank FROM peer_percentiles;", conn)
+    """Load each company's computed percentile rank within its peer group."""
+    return pd.read_sql(
+        "SELECT company_id, peer_group_name, metric, percentile_rank FROM peer_percentiles;",
+        conn,
+    )
 
 
 def build_sheet_df(group_df, percentiles_df, group_name):
@@ -74,9 +83,13 @@ def build_sheet_df(group_df, percentiles_df, group_name):
     issues (openpyxl can read mixed-type cells back as strings).
     """
     group_pct = percentiles_df[percentiles_df["peer_group_name"] == group_name]
-    pct_wide = group_pct.pivot(index="company_id", columns="metric", values="percentile_rank")
+    pct_wide = group_pct.pivot(
+        index="company_id", columns="metric", values="percentile_rank"
+    )
 
-    result = group_df[["company_id", "company_name", "is_benchmark"] + [m for m, _ in RANKED_METRICS]].copy()
+    result = group_df[
+        ["company_id", "company_name", "is_benchmark"] + [m for m, _ in RANKED_METRICS]
+    ].copy()
     result = result.set_index("company_id")
 
     pct_columns_ordered = []
@@ -100,6 +113,7 @@ def build_sheet_df(group_df, percentiles_df, group_name):
 
 
 def write_sheet(writer, sheet_name, df):
+    """Write one peer group's comparison table to its own sheet in the output workbook."""
     safe_name = sheet_name[:31]
     df_out = df.drop(columns=["is_benchmark"])
     df_out.to_excel(writer, sheet_name=safe_name, index=False)
@@ -142,10 +156,13 @@ def write_sheet(writer, sheet_name, df):
         col_values = pd.to_numeric(df_out.iloc[:, col_idx - 1], errors="coerce")
         median_val = col_values.median()
         if pd.notna(median_val):
-            ws.cell(row=summary_row_idx, column=col_idx, value=round(median_val, 4)).font = BOLD
+            ws.cell(
+                row=summary_row_idx, column=col_idx, value=round(median_val, 4)
+            ).font = BOLD
 
 
 def main():
+    """CLI entry point: generate peer_comparison.xlsx with one sheet per peer group."""
     conn = sqlite3.connect(DB_PATH)
     group_data = load_peer_data(conn)
     percentiles = load_percentiles(conn)
@@ -162,7 +179,9 @@ def main():
             print(f"{group_name}: {len(sheet_df)} companies written")
             total += len(sheet_df)
 
-    print(f"\n{OUTPUT_PATH} written with {group_data['peer_group_name'].nunique()} sheets, {total} total company rows.")
+    print(
+        f"\n{OUTPUT_PATH} written with {group_data['peer_group_name'].nunique()} sheets, {total} total company rows."
+    )
 
 
 if __name__ == "__main__":

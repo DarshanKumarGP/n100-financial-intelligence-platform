@@ -30,13 +30,20 @@ of trying to embed a Unicode-capable font for three characters.
 
 import os
 import sqlite3
-import pandas as pd
 
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
+import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import (
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 DB_PATH = "data/nifty100.db"
 OUTPUT_PATH = "reports/portfolio/portfolio_summary.pdf"
@@ -88,6 +95,7 @@ def trend_arrow(col, direction, latest_val, prior_val):
 
 
 def fmt(v, suffix="%"):
+    """Format a KPI value for display, returning 'N/A' for missing data."""
     if pd.isna(v):
         return "N/A"
     if suffix == "x":
@@ -96,23 +104,33 @@ def fmt(v, suffix="%"):
 
 
 def build_header(company_id, sector):
-    header_style = ParagraphStyle("header", parent=styles["Title"],
-                                   textColor=colors.white, fontSize=18)
-    sub_style = ParagraphStyle("sub", parent=styles["Normal"],
-                                textColor=colors.white, fontSize=10)
-    data = [[Paragraph(company_id, header_style)],
-            [Paragraph(sector or "Sector: N/A", sub_style)]]
+    """Build the navy header bar for a portfolio summary page."""
+    header_style = ParagraphStyle(
+        "header", parent=styles["Title"], textColor=colors.white, fontSize=18
+    )
+    sub_style = ParagraphStyle(
+        "sub", parent=styles["Normal"], textColor=colors.white, fontSize=10
+    )
+    data = [
+        [Paragraph(company_id, header_style)],
+        [Paragraph(sector or "Sector: N/A", sub_style)],
+    ]
     t = Table(data, colWidths=[170 * mm])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), NAVY),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LEFTPADDING", (0, 0), (-1, -1), 12),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), NAVY),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+            ]
+        )
+    )
     return t
 
 
 def build_kpi_table(latest_row, prior_row):
+    """Build the top-6-KPI table with UP/DOWN/FLAT trend labels for a company's portfolio summary page."""
     rows = [["KPI", "Value", "Trend"]]
     arrow_colors = []
 
@@ -143,18 +161,29 @@ def build_kpi_table(latest_row, prior_row):
 
 
 def generate_portfolio_pdf():
+    """Generate the one-page-per-company portfolio summary PDF for all companies, alphabetical by ticker."""
     conn = sqlite3.connect(DB_PATH)
-    fr = pd.read_sql("""
+    fr = pd.read_sql(
+        """
         SELECT * FROM financial_ratios WHERE year != 'TTM' ORDER BY company_id, year
-    """, conn)
-    sectors = dict(conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall())
+    """,
+        conn,
+    )
+    sectors = dict(
+        conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall()
+    )
     companies = sorted(pd.read_sql("SELECT id FROM companies;", conn)["id"].tolist())
     conn.close()
 
     os.makedirs("reports/portfolio", exist_ok=True)
-    doc = SimpleDocTemplate(OUTPUT_PATH, pagesize=A4,
-                             topMargin=15 * mm, bottomMargin=15 * mm,
-                             leftMargin=20 * mm, rightMargin=20 * mm)
+    doc = SimpleDocTemplate(
+        OUTPUT_PATH,
+        pagesize=A4,
+        topMargin=15 * mm,
+        bottomMargin=15 * mm,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+    )
     story = []
     skipped = []
 
@@ -177,7 +206,9 @@ def generate_portfolio_pdf():
     doc.build(story)
     print(f"{OUTPUT_PATH} written: {len(companies) - len(skipped)} pages")
     if skipped:
-        print(f"Companies with NO financial_ratios data at all (excluded entirely): {skipped}")
+        print(
+            f"Companies with NO financial_ratios data at all (excluded entirely): {skipped}"
+        )
 
 
 if __name__ == "__main__":

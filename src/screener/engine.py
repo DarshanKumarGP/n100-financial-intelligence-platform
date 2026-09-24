@@ -9,14 +9,16 @@ profitandloss, market_cap, and sectors.
 """
 
 import sqlite3
-import yaml
+
 import pandas as pd
+import yaml
 
 DB_PATH = "data/nifty100.db"
 CONFIG_PATH = "config/screener_config.yaml"
 
 
 def load_config(path=CONFIG_PATH):
+    """Load the screener's filterable metrics and outlier guard settings from screener_config.yaml."""
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
@@ -63,10 +65,14 @@ def build_latest_snapshot(conn):
 
     df["equity_base"] = df["equity_capital"] + df["reserves"]
     df["profit_to_equity_ratio"] = df.apply(
-        lambda r: (r["net_profit"] / r["equity_base"])
-        if pd.notna(r["equity_base"]) and r["equity_base"] > 0 and pd.notna(r["net_profit"])
-        else None,
-        axis=1
+        lambda r: (
+            (r["net_profit"] / r["equity_base"])
+            if pd.notna(r["equity_base"])
+            and r["equity_base"] > 0
+            and pd.notna(r["net_profit"])
+            else None
+        ),
+        axis=1,
     )
 
     return df
@@ -78,7 +84,9 @@ def apply_outlier_guard(df, config):
     if not guard.get("enabled", False):
         return df
     threshold = guard.get("max_profit_to_equity_ratio", 5)
-    mask = df["profit_to_equity_ratio"].isna() | (df["profit_to_equity_ratio"] <= threshold)
+    mask = df["profit_to_equity_ratio"].isna() | (
+        df["profit_to_equity_ratio"] <= threshold
+    )
     return df[mask]
 
 
@@ -113,9 +121,9 @@ def apply_single_filter(df, metric_key, threshold, config):
         pass_mask = pd.Series(False, index=working.index)
         pass_mask |= exempt_mask
         if direction == "max":
-            pass_mask |= (working[compare_col] <= threshold)
+            pass_mask |= working[compare_col] <= threshold
         else:
-            pass_mask |= (working[compare_col] >= threshold)
+            pass_mask |= working[compare_col] >= threshold
         return working[pass_mask].drop(columns=["_icr_effective"], errors="ignore")
 
     if direction == "max":
@@ -140,7 +148,9 @@ def apply_filters(df, filters, config, apply_guard=True):
     for metric_key, threshold in filters.items():
         result = apply_single_filter(result, metric_key, threshold, config)
 
-    result = result.sort_values("composite_quality_score", ascending=False, na_position="last")
+    result = result.sort_values(
+        "composite_quality_score", ascending=False, na_position="last"
+    )
 
     return result
 
@@ -159,4 +169,15 @@ if __name__ == "__main__":
     # Quick manual smoke test: ROE > 15%, D/E < 1
     results = run_screener({"roe_min": 15, "de_max": 1.0})
     print(f"ROE>15%% AND D/E<1: {len(results)} companies")
-    print(results[["company_id", "return_on_equity_pct", "debt_to_equity", "composite_quality_score"]].head(10).to_string())
+    print(
+        results[
+            [
+                "company_id",
+                "return_on_equity_pct",
+                "debt_to_equity",
+                "composite_quality_score",
+            ]
+        ]
+        .head(10)
+        .to_string()
+    )

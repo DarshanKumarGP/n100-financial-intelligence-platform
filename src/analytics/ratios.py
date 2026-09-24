@@ -56,9 +56,14 @@ def ebit(operating_profit, depreciation):
     return operating_profit - (depreciation or 0)
 
 
-def return_on_capital_employed(operating_profit, depreciation,
-                                equity_capital, reserves, borrowings,
-                                is_financials_sector=False):
+def return_on_capital_employed(
+    operating_profit,
+    depreciation,
+    equity_capital,
+    reserves,
+    borrowings,
+    is_financials_sector=False,
+):
     """
     ROCE = EBIT / (equity + reserves + borrowings) * 100.
     None if the denominator is <= 0.
@@ -71,7 +76,12 @@ def return_on_capital_employed(operating_profit, depreciation,
     still computed the same way for everyone; only how it's judged differs.
     """
     ebit_val = ebit(operating_profit, depreciation)
-    if ebit_val is None or equity_capital is None or reserves is None or borrowings is None:
+    if (
+        ebit_val is None
+        or equity_capital is None
+        or reserves is None
+        or borrowings is None
+    ):
         return None
     capital_employed = equity_capital + reserves + borrowings
     if capital_employed <= 0:

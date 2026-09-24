@@ -51,13 +51,19 @@ still run on the raw boolean/None values; only the Excel-bound copy
 gets converted to explicit Yes/No/N/A strings.
 """
 
-import sqlite3
 import os
+import sqlite3
+import sys
+
 import pandas as pd
 
-import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cashflow_kpis import capex_intensity, detect_distress_signal, detect_deleveraging, _cfo_quality_label
+from cashflow_kpis import (
+    _cfo_quality_label,
+    capex_intensity,
+    detect_deleveraging,
+    detect_distress_signal,
+)
 
 DB_PATH = "data/nifty100.db"
 CAP_ALLOC_PATH = "output/capital_allocation.csv"
@@ -69,7 +75,9 @@ def get_latest_capital_allocation_label(cap_alloc_df, company_id):
     NOT null and NOT 'Undetermined'. Falls back to 'Undetermined' only
     if no valid year exists at all for that company.
     """
-    rows = cap_alloc_df[cap_alloc_df["company_id"] == company_id].sort_values("year", ascending=False)
+    rows = cap_alloc_df[cap_alloc_df["company_id"] == company_id].sort_values(
+        "year", ascending=False
+    )
     for _, row in rows.iterrows():
         label = row["pattern_label"]
         if pd.notna(label) and label != "Undetermined":
@@ -90,31 +98,46 @@ def _bool_to_label(v):
 
 
 def main():
+    """CLI entry point: compute CFO quality, CapEx intensity, and distress/deleveraging flags for all companies; write cashflow_intelligence.xlsx and distress_alerts.csv."""
     conn = sqlite3.connect(DB_PATH)
 
     companies = pd.read_sql("SELECT id FROM companies;", conn)["id"].tolist()
-    sectors = dict(conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall())
+    sectors = dict(
+        conn.execute("SELECT company_id, broad_sector FROM sectors;").fetchall()
+    )
 
-    fr = pd.read_sql("""
+    fr = pd.read_sql(
+        """
         SELECT company_id, year, cfo_pat_ratio_5yr, fcf_cagr_5yr, fcf_conversion_pct
         FROM financial_ratios WHERE year != 'TTM' ORDER BY company_id, year
-    """, conn)
+    """,
+        conn,
+    )
     fr["cfo_pat_ratio_5yr"] = pd.to_numeric(fr["cfo_pat_ratio_5yr"], errors="coerce")
 
-    cf = pd.read_sql("""
+    cf = pd.read_sql(
+        """
         SELECT company_id, year, operating_activity, investing_activity, financing_activity
         FROM cashflow WHERE year != 'TTM' ORDER BY company_id, year
-    """, conn)
+    """,
+        conn,
+    )
 
-    pl = pd.read_sql("""
+    pl = pd.read_sql(
+        """
         SELECT company_id, year, sales, net_profit
         FROM profitandloss WHERE year != 'TTM' ORDER BY company_id, year
-    """, conn)
+    """,
+        conn,
+    )
 
-    bs = pd.read_sql("""
+    bs = pd.read_sql(
+        """
         SELECT company_id, year, borrowings
         FROM balancesheet ORDER BY company_id, year
-    """, conn)
+    """,
+        conn,
+    )
 
     conn.close()
 
@@ -149,7 +172,9 @@ def main():
         # financial_ratios.cfo_quality_label column itself is never written
         # by any script (confirmed None for all 1070 rows, 2026-09)
         cfo_ratio = fr_latest.get("cfo_pat_ratio_5yr")
-        cfo_quality_label = _cfo_quality_label(cfo_ratio) if pd.notna(cfo_ratio) else None
+        cfo_quality_label = (
+            _cfo_quality_label(cfo_ratio) if pd.notna(cfo_ratio) else None
+        )
 
         # Distress signal: latest year CFO/CFF only
         distress_flag = detect_distress_signal(cfo_latest, cff_latest)
@@ -159,31 +184,39 @@ def main():
         if len(bs_hist) >= 2:
             borrowings_current = bs_hist.iloc[-1].get("borrowings")
             borrowings_prior = bs_hist.iloc[-2].get("borrowings")
-            deleveraging_flag = detect_deleveraging(cff_latest, borrowings_current, borrowings_prior)
+            deleveraging_flag = detect_deleveraging(
+                cff_latest, borrowings_current, borrowings_prior
+            )
 
-        capital_allocation_label = get_latest_capital_allocation_label(cap_alloc_df, company_id)
+        capital_allocation_label = get_latest_capital_allocation_label(
+            cap_alloc_df, company_id
+        )
 
-        records.append({
-            "company_id": company_id,
-            "sector": sectors.get(company_id),
-            "cfo_quality_score": cfo_ratio,
-            "cfo_quality_label": cfo_quality_label,
-            "capex_intensity_pct": capex_pct,
-            "capex_label": capex_label,
-            "fcf_cagr_5yr": fr_latest.get("fcf_cagr_5yr"),
-            "fcf_conversion_pct": fr_latest.get("fcf_conversion_pct"),
-            "distress_flag": distress_flag,
-            "deleveraging_flag": deleveraging_flag,
-            "capital_allocation_label": capital_allocation_label,
-        })
+        records.append(
+            {
+                "company_id": company_id,
+                "sector": sectors.get(company_id),
+                "cfo_quality_score": cfo_ratio,
+                "cfo_quality_label": cfo_quality_label,
+                "capex_intensity_pct": capex_pct,
+                "capex_label": capex_label,
+                "fcf_cagr_5yr": fr_latest.get("fcf_cagr_5yr"),
+                "fcf_conversion_pct": fr_latest.get("fcf_conversion_pct"),
+                "distress_flag": distress_flag,
+                "deleveraging_flag": deleveraging_flag,
+                "capital_allocation_label": capital_allocation_label,
+            }
+        )
 
         if distress_flag:
-            distress_records.append({
-                "company_id": company_id,
-                "cfo": cfo_latest,
-                "cff": cff_latest,
-                "net_profit": net_profit_latest,
-            })
+            distress_records.append(
+                {
+                    "company_id": company_id,
+                    "cfo": cfo_latest,
+                    "cff": cff_latest,
+                    "net_profit": net_profit_latest,
+                }
+            )
 
     output_df = pd.DataFrame(records)
 
@@ -203,7 +236,9 @@ def main():
     print(f"capex_intensity_pct nulls: {output_df['capex_intensity_pct'].isna().sum()}")
     print(f"deleveraging_flag nulls: {output_df['deleveraging_flag'].isna().sum()}")
     print(f"\ndistress_flag True count: {output_df['distress_flag'].sum()}")
-    print(f"deleveraging_flag True count: {(output_df['deleveraging_flag']==True).sum()}")
+    print(
+        f"deleveraging_flag True count: {(output_df['deleveraging_flag']==True).sum()}"
+    )
 
     print("\ncfo_quality_label value counts:")
     print(output_df["cfo_quality_label"].value_counts(dropna=False))

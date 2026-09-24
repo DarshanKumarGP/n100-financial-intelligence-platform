@@ -77,7 +77,7 @@ def windowed_cagr(year_value_pairs, window_years):
     if len(sorted_pairs) < window_years + 1:
         return None, "INSUFFICIENT"
 
-    end_year, end_value = sorted_pairs[-1]
-    start_year, start_value = sorted_pairs[-(window_years + 1)]
+    _end_year, end_value = sorted_pairs[-1]
+    _start_year, start_value = sorted_pairs[-(window_years + 1)]
 
     return compute_cagr(start_value, end_value, window_years)

@@ -11,6 +11,7 @@ message rather than raising an error, per spec.
 """
 
 import sqlite3
+
 import pandas as pd
 
 DB_PATH = "data/nifty100.db"
@@ -19,7 +20,7 @@ METRICS = [
     "return_on_equity_pct",
     "return_on_capital_employed_pct",
     "net_profit_margin_pct",
-    "debt_to_equity",              # inverted -- lower is better
+    "debt_to_equity",  # inverted -- lower is better
     "free_cash_flow_cr",
     "pat_cagr_5yr",
     "revenue_cagr_5yr",
@@ -64,8 +65,10 @@ def compute_percentiles_for_group(group_df, metric):
         # always rank at or above every finite ICR in the group.
         finite_max = values.dropna().max() if values.notna().any() else 0
         values = group_df.apply(
-            lambda r: (finite_max + 1) if r.get("icr_label") == "Debt Free" else r[metric],
-            axis=1
+            lambda r: (
+                (finite_max + 1) if r.get("icr_label") == "Debt Free" else r[metric]
+            ),
+            axis=1,
         )
 
     ranks = values.rank(pct=True, na_option="keep")
@@ -90,7 +93,10 @@ def compute_peer_percentiles(conn):
 
     print(f"{len(grouped)} companies have a peer group; {len(ungrouped)} do not.")
     if len(ungrouped) > 0:
-        print("Companies with no peer group assigned:", sorted(ungrouped["company_id"].tolist()))
+        print(
+            "Companies with no peer group assigned:",
+            sorted(ungrouped["company_id"].tolist()),
+        )
 
     results = []
     for group_name, group_df in grouped.groupby("peer_group_name"):
@@ -98,28 +104,38 @@ def compute_peer_percentiles(conn):
             percentiles = compute_percentiles_for_group(group_df, metric)
             for idx, pct in percentiles.items():
                 row = group_df.loc[idx]
-                results.append({
-                    "company_id": row["company_id"],
-                    "peer_group_name": group_name,
-                    "metric": metric,
-                    "value": row[metric],
-                    "percentile_rank": pct,
-                    "year": row["year"],
-                })
+                results.append(
+                    {
+                        "company_id": row["company_id"],
+                        "peer_group_name": group_name,
+                        "metric": metric,
+                        "value": row[metric],
+                        "percentile_rank": pct,
+                        "year": row["year"],
+                    }
+                )
 
     percentiles_df = pd.DataFrame(results)
 
     # Ungrouped companies: explicit status rows, not silently omitted
-    no_group_rows = [{
-        "company_id": row["company_id"], "peer_group_name": None,
-        "metric": None, "value": None, "percentile_rank": None,
-        "year": row["year"], "status": "No peer group assigned",
-    } for _, row in ungrouped.iterrows()]
+    no_group_rows = [
+        {
+            "company_id": row["company_id"],
+            "peer_group_name": None,
+            "metric": None,
+            "value": None,
+            "percentile_rank": None,
+            "year": row["year"],
+            "status": "No peer group assigned",
+        }
+        for _, row in ungrouped.iterrows()
+    ]
 
     return percentiles_df, pd.DataFrame(no_group_rows)
 
 
 def write_to_db(conn, percentiles_df):
+    """Write computed peer percentile rankings to the peer_percentiles table."""
     conn.execute("DROP TABLE IF EXISTS peer_percentiles;")
     conn.execute("""
         CREATE TABLE peer_percentiles (
@@ -137,13 +153,18 @@ def write_to_db(conn, percentiles_df):
 
 
 def main():
+    """CLI entry point: compute peer percentile rankings for all peer groups and persist them to the database."""
     conn = sqlite3.connect(DB_PATH)
     percentiles_df, no_group_df = compute_peer_percentiles(conn)
     write_to_db(conn, percentiles_df)
 
     count = conn.execute("SELECT COUNT(*) FROM peer_percentiles;").fetchone()[0]
-    distinct_companies = conn.execute("SELECT COUNT(DISTINCT company_id) FROM peer_percentiles;").fetchone()[0]
-    distinct_groups = conn.execute("SELECT COUNT(DISTINCT peer_group_name) FROM peer_percentiles;").fetchone()[0]
+    distinct_companies = conn.execute(
+        "SELECT COUNT(DISTINCT company_id) FROM peer_percentiles;"
+    ).fetchone()[0]
+    distinct_groups = conn.execute(
+        "SELECT COUNT(DISTINCT peer_group_name) FROM peer_percentiles;"
+    ).fetchone()[0]
 
     print(f"\npeer_percentiles table: {count} rows")
     print(f"Distinct companies ranked: {distinct_companies}")

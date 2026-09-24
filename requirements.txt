@@ -16,4 +16,4 @@ jupyter>=1.0
 black>=24.0
 ruff>=0.4
 pre-commit>=3.7
-python-dotenv>=1.0
+python-dotenv>=1.0pypdf

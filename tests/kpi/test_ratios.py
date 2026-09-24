@@ -9,8 +9,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src" / "analytics"))
 
 from ratios import (
-    net_profit_margin, operating_profit_margin, opm_cross_check,
-    return_on_equity, return_on_capital_employed, return_on_assets,
+    net_profit_margin,
+    operating_profit_margin,
+    opm_cross_check,
+    return_on_assets,
+    return_on_capital_employed,
+    return_on_equity,
 )
 
 
@@ -23,7 +27,9 @@ def test_npm_zero_sales_returns_none():
 
 
 def test_opm_normal_case():
-    assert operating_profit_margin(operating_profit=2382, sales=3577) == pytest_approx(66.59)
+    assert operating_profit_margin(operating_profit=2382, sales=3577) == pytest_approx(
+        66.59
+    )
 
 
 def test_roe_normal_case():
@@ -57,8 +63,11 @@ def test_roa_zero_total_assets_returns_none():
 
 def test_roce_zero_capital_employed_returns_none():
     result = return_on_capital_employed(
-        operating_profit=100, depreciation=10,
-        equity_capital=0, reserves=0, borrowings=0
+        operating_profit=100,
+        depreciation=10,
+        equity_capital=0,
+        reserves=0,
+        borrowings=0,
     )
     assert result is None
 
@@ -67,4 +76,5 @@ def test_roce_zero_capital_employed_returns_none():
 # done this way to keep the test file dependency-light and explicit
 def pytest_approx(value, tol=0.01):
     import pytest
+
     return pytest.approx(value, abs=tol)

@@ -20,7 +20,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from normaliser import normalize_year, normalize_ticker
+from normaliser import normalize_ticker, normalize_year
 
 RAW_DIR = Path("data/raw")
 
@@ -58,7 +58,9 @@ def apply_ticker_normalisation(df: pd.DataFrame, name: str) -> pd.DataFrame:
     """Apply normalize_ticker() to whichever ID column this table has."""
     id_col = "id" if "id" in df.columns else "company_id"
     if id_col not in df.columns:
-        print(f"  [{name}] WARNING - no id/company_id column found, skipping ticker normalisation")
+        print(
+            f"  [{name}] WARNING - no id/company_id column found, skipping ticker normalisation"
+        )
         return df
 
     before_nulls = df[id_col].isna().sum()
@@ -66,11 +68,18 @@ def apply_ticker_normalisation(df: pd.DataFrame, name: str) -> pd.DataFrame:
     rejected = df[id_col].isna().sum() - before_nulls
 
     if rejected > 0:
-        print(f"  [{name}] WARNING - {rejected} rows have unusable {id_col} after normalisation")
+        print(
+            f"  [{name}] WARNING - {rejected} rows have unusable {id_col} after normalisation"
+        )
 
     # Also fix the company_name embedded-newline issue found during data inspection
     if "company_name" in df.columns:
-        df["company_name"] = df["company_name"].astype(str).str.strip().str.replace("\n", " ", regex=False)
+        df["company_name"] = (
+            df["company_name"]
+            .astype(str)
+            .str.strip()
+            .str.replace("\n", " ", regex=False)
+        )
 
     return df
 
@@ -90,14 +99,19 @@ def apply_year_normalisation(df: pd.DataFrame, name: str) -> pd.DataFrame:
     ttm_rows = (df[year_col] == "TTM").sum()
 
     if parse_errors > 0:
-        print(f"  [{name}] WARNING - {parse_errors} rows had unparseable year values (logged, not fixed -- see validation_failures.csv in Day 3)")
+        print(
+            f"  [{name}] WARNING - {parse_errors} rows had unparseable year values (logged, not fixed -- see validation_failures.csv in Day 3)"
+        )
     if ttm_rows > 0:
-        print(f"  [{name}] NOTE - {ttm_rows} rows are TTM (Trailing Twelve Months) -- valid, but excluded from year-over-year calculations downstream")
+        print(
+            f"  [{name}] NOTE - {ttm_rows} rows are TTM (Trailing Twelve Months) -- valid, but excluded from year-over-year calculations downstream"
+        )
 
     return df
 
 
 def main():
+    """CLI entry point: rebuild data/nifty100.db from the raw Excel source files."""
     print("Loading 7 core datasets...\n")
 
     loaded = {}
@@ -114,7 +128,9 @@ def main():
     # Quick sanity check on the fix from data inspection
     companies = loaded["companies"]
     remaining_newlines = companies["company_name"].str.contains("\n").sum()
-    print(f"\nCompany names with embedded newlines remaining: {remaining_newlines} (should be 0)")
+    print(
+        f"\nCompany names with embedded newlines remaining: {remaining_newlines} (should be 0)"
+    )
 
 
 if __name__ == "__main__":

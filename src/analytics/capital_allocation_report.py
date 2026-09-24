@@ -23,9 +23,10 @@ Produces:
 """
 
 import os
+import sys
+
 import pandas as pd
 
-import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cashflow_intelligence import get_latest_capital_allocation_label
 
@@ -51,13 +52,15 @@ def build_pattern_changes(cap_alloc_df):
             year = row["year"]
             label = row["pattern_label"]
             if prev_label is not None and label != prev_label:
-                changes.append({
-                    "company_id": company_id,
-                    "from_year": prev_year,
-                    "to_year": year,
-                    "from_pattern": prev_label,
-                    "to_pattern": label,
-                })
+                changes.append(
+                    {
+                        "company_id": company_id,
+                        "from_year": prev_year,
+                        "to_year": year,
+                        "from_pattern": prev_label,
+                        "to_pattern": label,
+                    }
+                )
             prev_year = year
             prev_label = label
 
@@ -65,6 +68,7 @@ def build_pattern_changes(cap_alloc_df):
 
 
 def main():
+    """CLI entry point: verify Sprint 2's capital_allocation.csv coverage, build the pattern distribution summary, and write pattern_changes.csv."""
     cap_alloc_df = pd.read_csv(CAP_ALLOC_PATH)
     companies = sorted(cap_alloc_df["company_id"].unique())
 
@@ -88,13 +92,23 @@ def main():
     changes_df.to_csv("output/pattern_changes.csv", index=False)
 
     print(f"\noutput/pattern_changes.csv written: {len(changes_df)} transitions")
-    print(f"Distinct companies with at least 1 change: {changes_df['company_id'].nunique() if len(changes_df) else 0}")
-    companies_no_change = set(companies) - set(changes_df["company_id"].unique() if len(changes_df) else [])
-    print(f"Companies with ZERO pattern changes (stable throughout): {len(companies_no_change)}")
+    print(
+        f"Distinct companies with at least 1 change: {changes_df['company_id'].nunique() if len(changes_df) else 0}"
+    )
+    companies_no_change = set(companies) - set(
+        changes_df["company_id"].unique() if len(changes_df) else []
+    )
+    print(
+        f"Companies with ZERO pattern changes (stable throughout): {len(companies_no_change)}"
+    )
 
     if len(changes_df):
         print("\nMost common transition types:")
-        transition_counts = changes_df.groupby(["from_pattern", "to_pattern"]).size().sort_values(ascending=False)
+        transition_counts = (
+            changes_df.groupby(["from_pattern", "to_pattern"])
+            .size()
+            .sort_values(ascending=False)
+        )
         print(transition_counts.head(10).to_string())
 
     return dist_df, changes_df

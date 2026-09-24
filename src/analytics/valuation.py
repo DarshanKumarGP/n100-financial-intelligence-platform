@@ -8,9 +8,10 @@ style extreme small-equity-base companies would otherwise distort the
 benchmark every other company in the sector gets compared against.
 """
 
-import sqlite3
-import pandas as pd
 import os
+import sqlite3
+
+import pandas as pd
 
 DB_PATH = "data/nifty100.db"
 
@@ -46,10 +47,14 @@ def load_valuation_base(conn):
 
     df["equity_base"] = df["equity_capital"] + df["reserves"]
     df["profit_to_equity_ratio"] = df.apply(
-        lambda r: (r["net_profit"] / r["equity_base"])
-        if pd.notna(r["equity_base"]) and r["equity_base"] > 0 and pd.notna(r["net_profit"])
-        else None,
-        axis=1
+        lambda r: (
+            (r["net_profit"] / r["equity_base"])
+            if pd.notna(r["equity_base"])
+            and r["equity_base"] > 0
+            and pd.notna(r["net_profit"])
+            else None
+        ),
+        axis=1,
     )
     # Same guard threshold used throughout the project since Sprint 2 Finding 5
     df["is_outlier"] = df["profit_to_equity_ratio"] > 5
@@ -58,7 +63,14 @@ def load_valuation_base(conn):
 
 
 def compute_fcf_yield(fcf, market_cap):
-    if fcf is None or market_cap is None or pd.isna(fcf) or pd.isna(market_cap) or market_cap == 0:
+    """Compute free cash flow yield (FCF divided by market cap) for a company-year."""
+    if (
+        fcf is None
+        or market_cap is None
+        or pd.isna(fcf)
+        or pd.isna(market_cap)
+        or market_cap == 0
+    ):
         return None
     return (fcf / market_cap) * 100
 
@@ -67,7 +79,8 @@ def get_5yr_median_pe(conn, ticker):
     """Company's own trailing 5-year median P/E from market_cap."""
     df = pd.read_sql(
         "SELECT pe_ratio FROM market_cap WHERE company_id = ? ORDER BY year DESC LIMIT 5",
-        conn, params=(ticker,)
+        conn,
+        params=(ticker,),
     )
     valid = df["pe_ratio"].dropna()
     return valid.median() if len(valid) > 0 else None
@@ -89,7 +102,13 @@ def assign_flag(pe, sector_median_pe):
     Caution if P/E > 1.5x sector median, Discount if < 0.7x, else Fair.
     None if either input is missing -- can't flag without both.
     """
-    if pe is None or sector_median_pe is None or pd.isna(pe) or pd.isna(sector_median_pe) or sector_median_pe == 0:
+    if (
+        pe is None
+        or sector_median_pe is None
+        or pd.isna(pe)
+        or pd.isna(sector_median_pe)
+        or sector_median_pe == 0
+    ):
         return None
     if pe > sector_median_pe * 1.5:
         return "Caution"
@@ -99,15 +118,21 @@ def assign_flag(pe, sector_median_pe):
 
 
 def main():
+    """CLI entry point: compute valuation flags (FCF yield, sector median P/E, over/undervaluation) and write valuation_summary.xlsx and valuation_flags.csv."""
     conn = sqlite3.connect(DB_PATH)
     df = load_valuation_base(conn)
 
     print(f"Loaded {len(df)} companies for valuation.")
     outlier_count = df["is_outlier"].sum()
-    print(f"{outlier_count} companies flagged as outliers (excluded from sector median calc only): "
-          f"{df[df['is_outlier']]['company_id'].tolist()}")
+    print(
+        f"{outlier_count} companies flagged as outliers (excluded from sector median calc only): "
+        f"{df[df['is_outlier']]['company_id'].tolist()}"
+    )
 
-    df["fcf_yield_pct"] = df.apply(lambda r: compute_fcf_yield(r["free_cash_flow_cr"], r["market_cap_crore"]), axis=1)
+    df["fcf_yield_pct"] = df.apply(
+        lambda r: compute_fcf_yield(r["free_cash_flow_cr"], r["market_cap_crore"]),
+        axis=1,
+    )
 
     df["5yr_median_pe"] = df["company_id"].apply(lambda t: get_5yr_median_pe(conn, t))
 
@@ -115,16 +140,32 @@ def main():
     df["sector_median_pe"] = df["broad_sector"].map(sector_medians)
 
     df["pe_vs_sector_median_pct"] = df.apply(
-        lambda r: ((r["pe_ratio"] - r["sector_median_pe"]) / r["sector_median_pe"] * 100)
-        if pd.notna(r["pe_ratio"]) and pd.notna(r["sector_median_pe"]) and r["sector_median_pe"] != 0
-        else None,
-        axis=1
+        lambda r: (
+            ((r["pe_ratio"] - r["sector_median_pe"]) / r["sector_median_pe"] * 100)
+            if pd.notna(r["pe_ratio"])
+            and pd.notna(r["sector_median_pe"])
+            and r["sector_median_pe"] != 0
+            else None
+        ),
+        axis=1,
     )
 
-    df["flag"] = df.apply(lambda r: assign_flag(r["pe_ratio"], r["sector_median_pe"]), axis=1)
+    df["flag"] = df.apply(
+        lambda r: assign_flag(r["pe_ratio"], r["sector_median_pe"]), axis=1
+    )
 
-    output_cols = ["company_id", "company_name", "broad_sector", "pe_ratio", "pb_ratio",
-                   "ev_ebitda", "fcf_yield_pct", "5yr_median_pe", "pe_vs_sector_median_pct", "flag"]
+    output_cols = [
+        "company_id",
+        "company_name",
+        "broad_sector",
+        "pe_ratio",
+        "pb_ratio",
+        "ev_ebitda",
+        "fcf_yield_pct",
+        "5yr_median_pe",
+        "pe_vs_sector_median_pct",
+        "flag",
+    ]
     final = df[output_cols].rename(columns={"company_id": "company_id"})
 
     os.makedirs("output", exist_ok=True)

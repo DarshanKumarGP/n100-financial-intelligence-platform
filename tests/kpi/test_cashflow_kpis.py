@@ -9,8 +9,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src" / "analytics"))
 
 from cashflow_kpis import (
-    free_cash_flow, cfo_quality_score, capex_intensity,
-    fcf_conversion_rate, classify_capital_allocation,
+    capex_intensity,
+    cfo_quality_score,
+    classify_capital_allocation,
+    fcf_conversion_rate,
+    free_cash_flow,
 )
 
 
@@ -23,22 +26,22 @@ def test_fcf_negative_allowed():
 
 
 def test_cfo_quality_high():
-    score, label = cfo_quality_score([1200, 1300], [1000, 1000])
+    _score, label = cfo_quality_score([1200, 1300], [1000, 1000])
     assert label == "High Quality"
 
 
 def test_cfo_quality_accrual_risk():
-    score, label = cfo_quality_score([300, 400], [1000, 1000])
+    _score, label = cfo_quality_score([300, 400], [1000, 1000])
     assert label == "Accrual Risk"
 
 
 def test_capex_intensity_asset_light():
-    intensity, label = capex_intensity(investing_activity=-100, sales=10000)
+    _intensity, label = capex_intensity(investing_activity=-100, sales=10000)
     assert label == "Asset Light"
 
 
 def test_capex_intensity_capital_intensive():
-    intensity, label = capex_intensity(investing_activity=-1000, sales=10000)
+    _intensity, label = capex_intensity(investing_activity=-1000, sales=10000)
     assert label == "Capital Intensive"
 
 

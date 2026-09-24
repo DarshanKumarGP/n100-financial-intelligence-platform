@@ -7,15 +7,25 @@ logic, sector exemptions, and the outlier guard are already built and
 tested in Sprint 3. This screen is UI wiring, not new analytics.
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "screener"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+import sys
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "screener")
+)
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils")
+)
+
+import sqlite3
 
 import streamlit as st
-import pandas as pd
-from engine import build_latest_snapshot, apply_outlier_guard, load_config, apply_single_filter
-import sqlite3
+from engine import (
+    apply_outlier_guard,
+    apply_single_filter,
+    build_latest_snapshot,
+    load_config,
+)
 
 st.title("Screener")
 
@@ -24,6 +34,7 @@ DB_PATH = "data/nifty100.db"
 
 @st.cache_data(ttl=600)
 def get_snapshot():
+    """Load and cache the latest company snapshot with the outlier guard applied, shared across all screener filters."""
     conn = sqlite3.connect(DB_PATH)
     config = load_config()
     snapshot = build_latest_snapshot(conn)
@@ -36,7 +47,12 @@ snapshot, config = get_snapshot()
 
 # --- Preset buttons: pre-fill session_state BEFORE sliders are created ---
 PRESET_DEFAULTS = {
-    "Quality Compounder": {"roe_min": 15, "de_max": 1.0, "fcf_min": 0.01, "revenue_cagr_min": 10},
+    "Quality Compounder": {
+        "roe_min": 15,
+        "de_max": 1.0,
+        "fcf_min": 0.01,
+        "revenue_cagr_min": 10,
+    },
     "Value Pick": {"pe_max": 20, "pb_max": 3.0, "de_max": 2.0, "dividend_yield_min": 1},
     "Growth Accelerator": {"pat_cagr_min": 20, "revenue_cagr_min": 15, "de_max": 2.0},
     "Dividend Champion": {"dividend_yield_min": 2, "fcf_min": 0.01},
@@ -72,15 +88,23 @@ st.sidebar.subheader("Filters")
 filters = {}
 
 label_map = {
-    "roe_min": "ROE min (%)", "de_max": "D/E max", "fcf_min": "FCF min (Cr)",
-    "revenue_cagr_min": "Revenue CAGR 5yr min (%)", "pat_cagr_min": "PAT CAGR 5yr min (%)",
-    "opm_min": "OPM min (%)", "pe_max": "P/E max", "pb_max": "P/B max",
-    "dividend_yield_min": "Dividend Yield min (%)", "icr_min": "ICR min",
+    "roe_min": "ROE min (%)",
+    "de_max": "D/E max",
+    "fcf_min": "FCF min (Cr)",
+    "revenue_cagr_min": "Revenue CAGR 5yr min (%)",
+    "pat_cagr_min": "PAT CAGR 5yr min (%)",
+    "opm_min": "OPM min (%)",
+    "pe_max": "P/E max",
+    "pb_max": "P/B max",
+    "dividend_yield_min": "Dividend Yield min (%)",
+    "icr_min": "ICR min",
 }
 
 for key, (lo, hi, default_off) in SLIDER_BOUNDS.items():
     value = st.sidebar.slider(
-        label_map[key], min_value=lo, max_value=hi,
+        label_map[key],
+        min_value=lo,
+        max_value=hi,
         value=st.session_state.get(f"slider_{key}", default_off),
         key=f"slider_{key}",
     )
@@ -95,22 +119,41 @@ if st.sidebar.button("Reset all filters"):
 # --- Apply filters using engine.py's tested single-filter logic ---
 result = snapshot.copy()
 engine_metric_map = {
-    "roe_min": "roe_min", "de_max": "de_max", "fcf_min": "fcf_min",
-    "revenue_cagr_min": "revenue_cagr_5yr_min", "pat_cagr_min": "pat_cagr_5yr_min",
-    "opm_min": "opm_min", "pe_max": "pe_max", "pb_max": "pb_max",
-    "dividend_yield_min": "dividend_yield_min", "icr_min": "icr_min",
+    "roe_min": "roe_min",
+    "de_max": "de_max",
+    "fcf_min": "fcf_min",
+    "revenue_cagr_min": "revenue_cagr_5yr_min",
+    "pat_cagr_min": "pat_cagr_5yr_min",
+    "opm_min": "opm_min",
+    "pe_max": "pe_max",
+    "pb_max": "pb_max",
+    "dividend_yield_min": "dividend_yield_min",
+    "icr_min": "icr_min",
 }
 for ui_key, threshold in filters.items():
     engine_key = engine_metric_map[ui_key]
     result = apply_single_filter(result, engine_key, threshold, config)
 
-result = result.sort_values("composite_quality_score", ascending=False, na_position="last")
+result = result.sort_values(
+    "composite_quality_score", ascending=False, na_position="last"
+)
 
 st.subheader(f"{len(result)} companies match your filters")
 
-display_cols = ["company_id", "company_name", "broad_sector", "composite_quality_score",
-                 "return_on_equity_pct", "debt_to_equity", "free_cash_flow_cr",
-                 "revenue_cagr_5yr", "pat_cagr_5yr", "pe_ratio", "pb_ratio", "dividend_yield_pct"]
+display_cols = [
+    "company_id",
+    "company_name",
+    "broad_sector",
+    "composite_quality_score",
+    "return_on_equity_pct",
+    "debt_to_equity",
+    "free_cash_flow_cr",
+    "revenue_cagr_5yr",
+    "pat_cagr_5yr",
+    "pe_ratio",
+    "pb_ratio",
+    "dividend_yield_pct",
+]
 display_cols = [c for c in display_cols if c in result.columns]
 
 st.dataframe(result[display_cols], hide_index=True, use_container_width=True)
@@ -118,6 +161,8 @@ st.dataframe(result[display_cols], hide_index=True, use_container_width=True)
 # --- CSV download ---
 csv_data = result[display_cols].to_csv(index=False).encode("utf-8")
 st.download_button(
-    "Download results as CSV", data=csv_data,
-    file_name="screener_results.csv", mime="text/csv",
+    "Download results as CSV",
+    data=csv_data,
+    file_name="screener_results.csv",
+    mime="text/csv",
 )

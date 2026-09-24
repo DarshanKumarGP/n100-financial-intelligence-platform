@@ -63,14 +63,17 @@ def test_get_fiscal_years_excludes_ttm():
 
 
 def test_windowed_cagr_normal_case():
-    pairs = [(f"{2015+i}-03", 100 * (1.1 ** i)) for i in range(6)]  # 6 years, ~10% growth
+    pairs = [(f"{2015+i}-03", 100 * (1.1**i)) for i in range(6)]  # 6 years, ~10% growth
     cagr, flag = windowed_cagr(pairs, window_years=5)
     assert flag is None
     assert round(cagr, 1) == 10.0
 
 
 def test_windowed_cagr_insufficient_history():
-    pairs = [("2022-03", 100), ("2023-03", 110)]  # only 2 years, need 6 for a 5yr window
+    pairs = [
+        ("2022-03", 100),
+        ("2023-03", 110),
+    ]  # only 2 years, need 6 for a 5yr window
     cagr, flag = windowed_cagr(pairs, window_years=5)
     assert cagr is None
     assert flag == "INSUFFICIENT"
@@ -78,7 +81,7 @@ def test_windowed_cagr_insufficient_history():
 
 def test_windowed_cagr_ignores_ttm_when_selecting_latest():
     # TTM should NOT be picked as the "latest" endpoint -- 2024-03 should be
-    pairs = [(f"{2019+i}-03", 100 * (1.1 ** i)) for i in range(6)] + [("TTM", 99999)]
+    pairs = [(f"{2019+i}-03", 100 * (1.1**i)) for i in range(6)] + [("TTM", 99999)]
     cagr, flag = windowed_cagr(pairs, window_years=5)
     assert flag is None
     assert round(cagr, 1) == 10.0  # NOT skewed by the absurd TTM value

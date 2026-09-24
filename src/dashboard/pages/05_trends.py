@@ -3,19 +3,25 @@ N100 Financial Intelligence Platform
 Sprint 4, Day 25: Trend Analysis Screen
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+import sys
 
-import streamlit as st
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils")
+)
+
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
+
 from db import get_companies, get_ratios_history
 
 st.title("Trend Analysis")
 
 companies_df = get_companies()
-search_options = [f"{row['id']} — {row['company_name']}" for _, row in companies_df.iterrows()]
+search_options = [
+    f"{row['id']} — {row['company_name']}" for _, row in companies_df.iterrows()
+]
 selected = st.selectbox("Search company", options=[""] + search_options)
 
 if not selected:
@@ -40,8 +46,10 @@ AVAILABLE_METRICS = {
 }
 
 selected_metrics = st.multiselect(
-    "Select up to 3 metrics to overlay", options=list(AVAILABLE_METRICS.keys()),
-    default=["ROE %"], max_selections=3,
+    "Select up to 3 metrics to overlay",
+    options=list(AVAILABLE_METRICS.keys()),
+    default=["ROE %"],
+    max_selections=3,
 )
 
 if not selected_metrics:
@@ -57,16 +65,26 @@ for label in selected_metrics:
     yoy_change = values.pct_change() * 100
 
     hover_text = [
-        f"{label}: {v:.1f}<br>YoY: {c:+.1f}%" if pd.notna(v) and pd.notna(c) else f"{label}: {v:.1f}" if pd.notna(v) else "N/A"
+        (
+            f"{label}: {v:.1f}<br>YoY: {c:+.1f}%"
+            if pd.notna(v) and pd.notna(c)
+            else f"{label}: {v:.1f}" if pd.notna(v) else "N/A"
+        )
         for v, c in zip(values, yoy_change)
     ]
 
-    fig.add_trace(go.Scatter(
-        x=history_recent["year"], y=values, name=label,
-        mode="lines+markers", text=hover_text, hoverinfo="text+x",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=history_recent["year"],
+            y=values,
+            name=label,
+            mode="lines+markers",
+            text=hover_text,
+            hoverinfo="text+x",
+        )
+    )
 
-fig.update_layout(height=500, margin=dict(t=30, b=10), hovermode="x unified")
+fig.update_layout(height=500, margin={"t": 30, "b": 10}, hovermode="x unified")
 st.plotly_chart(fig, use_container_width=True)
 
 st.caption("Hover over a point to see the year-over-year % change alongside the value.")

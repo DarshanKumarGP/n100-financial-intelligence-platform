@@ -3,14 +3,18 @@ N100 Financial Intelligence Platform
 Sprint 4, Day 23: Company Profile Screen
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils"))
+import sys
 
-import streamlit as st
+sys.path.insert(
+    0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils")
+)
+
 import pandas as pd
 import plotly.graph_objects as go
-from db import get_companies, get_ratios, get_ratios_history, get_pl, get_pros_cons
+import streamlit as st
+
+from db import get_companies, get_pl, get_pros_cons, get_ratios, get_ratios_history
 
 st.title("Company Profile")
 
@@ -19,7 +23,9 @@ companies_df = get_companies()
 # --- Search box with autocomplete-style selection ---
 # Streamlit's selectbox has built-in type-to-filter, which serves as the
 # autocomplete behavior the spec asks for -- no separate widget needed.
-search_options = [f"{row['id']} — {row['company_name']}" for _, row in companies_df.iterrows()]
+search_options = [
+    f"{row['id']} — {row['company_name']}" for _, row in companies_df.iterrows()
+]
 selected = st.selectbox("Search company name or ticker", options=[""] + search_options)
 
 if not selected:
@@ -56,6 +62,7 @@ else:
     r = latest_ratios.iloc[0]
 
     def fmt(value, suffix=""):
+        """Format a KPI value for display, returning 'N/A' for missing data."""
         return f"{value:.1f}{suffix}" if pd.notna(value) else "N/A"
 
     c1, c2, c3, c4, c5, c6 = st.columns(6)
@@ -73,7 +80,9 @@ pl_history = get_pl(ticker)
 ratios_history = get_ratios_history(ticker)
 
 if len(pl_history) < 2:
-    st.info(f"Limited history available ({len(pl_history)} year(s)) — charts need at least 2 years to display a trend.")
+    st.info(
+        f"Limited history available ({len(pl_history)} year(s)) — charts need at least 2 years to display a trend."
+    )
 else:
     # Revenue and Net Profit on separate y-axes -- a shared axis makes
     # Net Profit's bars visually flatten to near-nothing, since profit
@@ -89,19 +98,38 @@ else:
     if len(pl_recent) >= 2:
         first_year_sales = pl_recent["sales"].iloc[0]
         second_year_sales = pl_recent["sales"].iloc[1]
-        if pd.notna(first_year_sales) and pd.notna(second_year_sales) and first_year_sales > 0:
+        if (  # noqa: SIM102 -- kept nested for readability, no behavior difference
+            pd.notna(first_year_sales)
+            and pd.notna(second_year_sales)
+            and first_year_sales > 0
+        ):
             if second_year_sales / first_year_sales > 10:
-                st.caption(f"⚠️ {pl_recent['year'].iloc[0]} shows unusually low revenue relative to "
-                           f"the following year — likely a partial/stub reporting period (e.g. a "
-                           f"recently listed or demerged company).")
+                st.caption(
+                    f"⚠️ {pl_recent['year'].iloc[0]} shows unusually low revenue relative to "
+                    f"the following year — likely a partial/stub reporting period (e.g. a "
+                    f"recently listed or demerged company)."
+                )
 
     fig1 = go.Figure()
-    fig1.add_trace(go.Bar(x=pl_recent["year"], y=pl_recent["sales"], name="Revenue (Cr)", yaxis="y1"))
-    fig1.add_trace(go.Bar(x=pl_recent["year"], y=pl_recent["net_profit"], name="Net Profit (Cr)", yaxis="y2"))
+    fig1.add_trace(
+        go.Bar(
+            x=pl_recent["year"], y=pl_recent["sales"], name="Revenue (Cr)", yaxis="y1"
+        )
+    )
+    fig1.add_trace(
+        go.Bar(
+            x=pl_recent["year"],
+            y=pl_recent["net_profit"],
+            name="Net Profit (Cr)",
+            yaxis="y2",
+        )
+    )
     fig1.update_layout(
-        barmode="group", height=400, margin=dict(t=30, b=10),
-        yaxis=dict(title="Revenue (Cr)"),
-        yaxis2=dict(title="Net Profit (Cr)", overlaying="y", side="right"),
+        barmode="group",
+        height=400,
+        margin={"t": 30, "b": 10},
+        yaxis={"title": "Revenue (Cr)"},
+        yaxis2={"title": "Net Profit (Cr)", "overlaying": "y", "side": "right"},
     )
     st.plotly_chart(fig1, use_container_width=True)
 
@@ -114,22 +142,34 @@ else:
         r_recent = ratios_history.tail(10)
 
         fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(
-            x=r_recent["year"], y=r_recent["return_on_equity_pct"],
-            name="ROE %", mode="lines+markers", yaxis="y1",
-            line=dict(color="#3b82f6"),
-        ))
-        fig2.add_trace(go.Scatter(
-            x=r_recent["year"], y=r_recent["return_on_capital_employed_pct"],
-            name="ROCE %", mode="lines+markers", yaxis="y2",
-            line=dict(color="#f97316"),
-        ))
+        fig2.add_trace(
+            go.Scatter(
+                x=r_recent["year"],
+                y=r_recent["return_on_equity_pct"],
+                name="ROE %",
+                mode="lines+markers",
+                yaxis="y1",
+                line={"color": "#3b82f6"},
+            )
+        )
+        fig2.add_trace(
+            go.Scatter(
+                x=r_recent["year"],
+                y=r_recent["return_on_capital_employed_pct"],
+                name="ROCE %",
+                mode="lines+markers",
+                yaxis="y2",
+                line={"color": "#f97316"},
+            )
+        )
         fig2.update_layout(
             height=400,
-            margin=dict(t=30, b=10),
-            yaxis=dict(title="ROE %", side="left"),
-            yaxis2=dict(title="ROCE %", side="right", overlaying="y"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            margin={"t": 30, "b": 10},
+            yaxis={"title": "ROE %", "side": "left"},
+            yaxis2={"title": "ROCE %", "side": "right", "overlaying": "y"},
+            legend={
+                "orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1
+            },
         )
         st.plotly_chart(fig2, use_container_width=True)
     else:

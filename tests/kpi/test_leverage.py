@@ -9,8 +9,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src" / "analytics"))
 
 from ratios import (
-    debt_to_equity, high_leverage_flag, interest_coverage,
-    icr_label, icr_warning_flag, net_debt, asset_turnover,
+    asset_turnover,
+    debt_to_equity,
+    high_leverage_flag,
+    icr_label,
+    icr_warning_flag,
+    interest_coverage,
+    net_debt,
 )
 
 

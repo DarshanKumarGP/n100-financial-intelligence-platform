@@ -6,18 +6,20 @@ Pulls every (company_id, year) from cashflow, computes the sign-based
 pattern classification for each, and writes the required CSV.
 """
 
-import sys
 import os
 import sqlite3
+import sys
+
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
-from cashflow_kpis import classify_capital_allocation, cfo_quality_score
+from cashflow_kpis import classify_capital_allocation
 
 DB_PATH = "data/nifty100.db"
 
 
 def main():
+    """CLI entry point: classify each company-year's capital allocation pattern and write output/capital_allocation.csv."""
     conn = sqlite3.connect(DB_PATH)
 
     # Cashflow gives us CFO/CFI/CFF directly. Join P&L for net_profit
@@ -50,18 +52,32 @@ def main():
             cfo=r["cfo"], cfi=r["cfi"], cff=r["cff"], cfo_over_pat=cfo_over_pat
         )
 
-        cfo_sign = "+" if r["cfo"] and r["cfo"] > 0 else ("-" if r["cfo"] and r["cfo"] < 0 else None)
-        cfi_sign = "+" if r["cfi"] and r["cfi"] > 0 else ("-" if r["cfi"] and r["cfi"] < 0 else None)
-        cff_sign = "+" if r["cff"] and r["cff"] > 0 else ("-" if r["cff"] and r["cff"] < 0 else None)
+        cfo_sign = (
+            "+"
+            if r["cfo"] and r["cfo"] > 0
+            else ("-" if r["cfo"] and r["cfo"] < 0 else None)
+        )
+        cfi_sign = (
+            "+"
+            if r["cfi"] and r["cfi"] > 0
+            else ("-" if r["cfi"] and r["cfi"] < 0 else None)
+        )
+        cff_sign = (
+            "+"
+            if r["cff"] and r["cff"] > 0
+            else ("-" if r["cff"] and r["cff"] < 0 else None)
+        )
 
-        rows.append({
-            "company_id": r["company_id"],
-            "year": r["year"],
-            "cfo_sign": cfo_sign,
-            "cfi_sign": cfi_sign,
-            "cff_sign": cff_sign,
-            "pattern_label": pattern,
-        })
+        rows.append(
+            {
+                "company_id": r["company_id"],
+                "year": r["year"],
+                "cfo_sign": cfo_sign,
+                "cfi_sign": cfi_sign,
+                "cff_sign": cff_sign,
+                "pattern_label": pattern,
+            }
+        )
 
     out = pd.DataFrame(rows)
     os.makedirs("output", exist_ok=True)

@@ -22,13 +22,13 @@ than forcing a fake 11th sector to match the spec's literal number.
 
 import os
 import sqlite3
-import pandas as pd
 
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.units import mm
+import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 DB_PATH = "data/nifty100.db"
 SECTOR_DIR = "reports/sector"
@@ -37,9 +37,17 @@ NAVY = colors.HexColor("#1a2744")
 LIGHT_GREY = colors.HexColor("#f0f0f0")
 
 styles = getSampleStyleSheet()
-cell_style = ParagraphStyle("cell", parent=styles["Normal"], fontSize=7, leading=9, wordWrap="CJK")
-header_cell_style = ParagraphStyle("header_cell", parent=styles["Normal"], fontSize=7,
-                                    leading=9, textColor=colors.white, wordWrap="CJK")
+cell_style = ParagraphStyle(
+    "cell", parent=styles["Normal"], fontSize=7, leading=9, wordWrap="CJK"
+)
+header_cell_style = ParagraphStyle(
+    "header_cell",
+    parent=styles["Normal"],
+    fontSize=7,
+    leading=9,
+    textColor=colors.white,
+    wordWrap="CJK",
+)
 
 METRIC_COLUMNS = [
     ("return_on_equity_pct", "ROE %"),
@@ -54,47 +62,61 @@ METRIC_COLUMNS = [
 
 
 def fmt(v):
+    """Format a KPI value for display, returning 'N/A' for missing data."""
     if pd.isna(v):
         return "N/A"
     return f"{v:.1f}"
 
 
 def build_header(sector_name):
-    header_style = ParagraphStyle("header", parent=styles["Title"],
-                                   textColor=colors.white, fontSize=16)
+    """Build the navy header bar for a sector report."""
+    header_style = ParagraphStyle(
+        "header", parent=styles["Title"], textColor=colors.white, fontSize=16
+    )
     data = [[Paragraph(sector_name, header_style)]]
     t = Table(data, colWidths=[257 * mm])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, -1), NAVY),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ("LEFTPADDING", (0, 0), (-1, -1), 12),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), NAVY),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("LEFTPADDING", (0, 0), (-1, -1), 12),
+            ]
+        )
+    )
     return t
 
 
 def build_median_summary(sector_df):
+    """Build the sector-level median KPI summary section."""
     rows = [["Metric (Sector Median)", "Value"]]
     for col, label in METRIC_COLUMNS:
         median_val = sector_df[col].median()
         rows.append([label, fmt(median_val)])
 
     t = Table(rows, colWidths=[90 * mm, 40 * mm])
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("BACKGROUND", (0, 1), (-1, -1), LIGHT_GREY),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("BACKGROUND", (0, 1), (-1, -1), LIGHT_GREY),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
     return t
 
 
 def build_company_table(sector_df):
-    header_row = [Paragraph("Company", header_cell_style)] + \
-                 [Paragraph(label, header_cell_style) for _, label in METRIC_COLUMNS]
+    """Build the table listing every company in the sector with its key metrics."""
+    header_row = [Paragraph("Company", header_cell_style)] + [
+        Paragraph(label, header_cell_style) for _, label in METRIC_COLUMNS
+    ]
     rows = [header_row]
 
     for _, row in sector_df.sort_values("company_id").iterrows():
@@ -105,21 +127,31 @@ def build_company_table(sector_df):
 
     col_widths = [28 * mm] + [28.6 * mm] * 8
     t = Table(rows, colWidths=col_widths, repeatRows=1)
-    t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-        ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, LIGHT_GREY]),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("GRID", (0, 0), (-1, -1), 0.4, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, LIGHT_GREY]),
+            ]
+        )
+    )
     return t
 
 
 def generate_sector_report(sector_name, sector_df, output_path):
-    doc = SimpleDocTemplate(output_path, pagesize=landscape(A4),
-                             topMargin=12 * mm, bottomMargin=12 * mm,
-                             leftMargin=20 * mm, rightMargin=20 * mm)
+    """Generate the 2-part sector PDF (median summary + company table) for one sector."""
+    doc = SimpleDocTemplate(
+        output_path,
+        pagesize=landscape(A4),
+        topMargin=12 * mm,
+        bottomMargin=12 * mm,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+    )
     story = []
     story.append(build_header(sector_name))
     story.append(Spacer(1, 10))
@@ -133,11 +165,15 @@ def generate_sector_report(sector_name, sector_df, output_path):
 
 
 def main():
+    """CLI entry point: batch-generate all 10 sector report PDFs under reports/sector/."""
     conn = sqlite3.connect(DB_PATH)
 
-    fr = pd.read_sql("""
+    fr = pd.read_sql(
+        """
         SELECT * FROM financial_ratios WHERE year != 'TTM' ORDER BY company_id, year
-    """, conn)
+    """,
+        conn,
+    )
     sectors = pd.read_sql("SELECT company_id, broad_sector FROM sectors;", conn)
     conn.close()
 
@@ -147,9 +183,11 @@ def main():
 
     distinct_sectors = sorted(latest["broad_sector"].dropna().unique())
     print(f"Distinct sectors found: {len(distinct_sectors)}")
-    print(f"(Spec text says 11; sectors.xlsx has been confirmed to contain "
-          f"only {len(distinct_sectors)} genuine broad_sector values since Sprint 1/2 -- "
-          f"generating {len(distinct_sectors)} real reports, not forcing an 11th.)")
+    print(
+        f"(Spec text says 11; sectors.xlsx has been confirmed to contain "
+        f"only {len(distinct_sectors)} genuine broad_sector values since Sprint 1/2 -- "
+        f"generating {len(distinct_sectors)} real reports, not forcing an 11th.)"
+    )
     print(distinct_sectors)
 
     os.makedirs(SECTOR_DIR, exist_ok=True)

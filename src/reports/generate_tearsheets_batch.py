@@ -18,9 +18,10 @@ Produces:
 
 import os
 import sqlite3
+import sys
+
 import pandas as pd
 
-import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tearsheet import generate_tearsheet
 
@@ -29,8 +30,11 @@ TEARSHEET_DIR = "reports/tearsheets"
 
 
 def main():
+    """CLI entry point: batch-generate tearsheet PDFs for all companies with at least 3 years of data, logging skipped tickers to output/skipped_tearsheets.csv."""
     conn = sqlite3.connect(DB_PATH)
-    companies = pd.read_sql("SELECT id FROM companies ORDER BY id;", conn)["id"].tolist()
+    companies = pd.read_sql("SELECT id FROM companies ORDER BY id;", conn)[
+        "id"
+    ].tolist()
     conn.close()
 
     os.makedirs(TEARSHEET_DIR, exist_ok=True)
@@ -44,10 +48,12 @@ def main():
             ok, msg = generate_tearsheet(company_id, output_path)
             if ok:
                 size_kb = os.path.getsize(output_path) / 1024
-                generated.append({"company_id": company_id, "size_kb": round(size_kb, 1)})
+                generated.append(
+                    {"company_id": company_id, "size_kb": round(size_kb, 1)}
+                )
             else:
                 skipped.append({"company_id": company_id, "reason": msg})
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 -- intentional: one company's failure must not abort the batch
             skipped.append({"company_id": company_id, "reason": f"EXCEPTION: {e}"})
 
     print(f"Generated: {len(generated)} tearsheets")
@@ -66,10 +72,14 @@ def main():
     generated_df = pd.DataFrame(generated)
     if len(generated_df):
         under_30kb = generated_df[generated_df["size_kb"] < 30]
-        print(f"\nGenerated files under 30 KB (exit criterion check): {len(under_30kb)}")
+        print(
+            f"\nGenerated files under 30 KB (exit criterion check): {len(under_30kb)}"
+        )
         if len(under_30kb):
             print(under_30kb.to_string(index=False))
-        print(f"Size range: {generated_df['size_kb'].min():.1f} KB - {generated_df['size_kb'].max():.1f} KB")
+        print(
+            f"Size range: {generated_df['size_kb'].min():.1f} KB - {generated_df['size_kb'].max():.1f} KB"
+        )
 
     return generated_df, skipped_df
 

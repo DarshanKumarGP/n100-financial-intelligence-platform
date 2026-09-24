@@ -8,38 +8,40 @@ Watch's "D/E declining YoY", Debt-Free Blue Chip's exact D/E=0) --
 those are handled as post-filter steps, documented per preset.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from engine import run_screener, build_latest_snapshot, apply_outlier_guard, load_config
 import sqlite3
+
 import pandas as pd
+from engine import apply_outlier_guard, build_latest_snapshot, load_config, run_screener
 
 DB_PATH = "data/nifty100.db"
 
 
 def quality_compounder():
     """ROE > 15%, D/E < 1.0, FCF > 0, Revenue CAGR 5yr > 10%"""
-    results = run_screener({
-        "roe_min": 15, "de_max": 1.0, "fcf_min": 0.01, "revenue_cagr_5yr_min": 10
-    })
+    results = run_screener(
+        {"roe_min": 15, "de_max": 1.0, "fcf_min": 0.01, "revenue_cagr_5yr_min": 10}
+    )
     return results
 
 
 def value_pick():
     """P/E < 20, P/B < 3.0, D/E < 2.0, Dividend Yield > 1%"""
-    results = run_screener({
-        "pe_max": 20, "pb_max": 3.0, "de_max": 2.0, "dividend_yield_min": 1
-    })
+    results = run_screener(
+        {"pe_max": 20, "pb_max": 3.0, "de_max": 2.0, "dividend_yield_min": 1}
+    )
     return results
 
 
 def growth_accelerator():
     """PAT CAGR 5yr > 20%, Revenue CAGR 5yr > 15%, D/E < 2.0"""
-    results = run_screener({
-        "pat_cagr_5yr_min": 20, "revenue_cagr_5yr_min": 15, "de_max": 2.0
-    })
+    results = run_screener(
+        {"pat_cagr_5yr_min": 20, "revenue_cagr_5yr_min": 15, "de_max": 2.0}
+    )
     return results
 
 
@@ -57,11 +59,13 @@ def dividend_champion():
     # straightforward column filter -- no join needed beyond what's already
     # in build_latest_snapshot.
     result = snapshot[
-        (snapshot["dividend_yield_pct"] > 2) &
-        (snapshot["dividend_payout_ratio_pct"] < 80) &
-        (snapshot["free_cash_flow_cr"] > 0)
+        (snapshot["dividend_yield_pct"] > 2)
+        & (snapshot["dividend_payout_ratio_pct"] < 80)
+        & (snapshot["free_cash_flow_cr"] > 0)
     ]
-    return result.sort_values("composite_quality_score", ascending=False, na_position="last")
+    return result.sort_values(
+        "composite_quality_score", ascending=False, na_position="last"
+    )
 
 
 def debtfree_bluechip():
@@ -74,11 +78,13 @@ def debtfree_bluechip():
     snapshot = apply_outlier_guard(snapshot, config)
 
     result = snapshot[
-        (snapshot["debt_to_equity"] < 0.1) &
-        (snapshot["return_on_equity_pct"] > 12) &
-        (snapshot["sales"] > 5000)
+        (snapshot["debt_to_equity"] < 0.1)
+        & (snapshot["return_on_equity_pct"] > 12)
+        & (snapshot["sales"] > 5000)
     ]
-    return result.sort_values("composite_quality_score", ascending=False, na_position="last")
+    return result.sort_values(
+        "composite_quality_score", ascending=False, na_position="last"
+    )
 
 
 def turnaround_watch():
@@ -112,11 +118,13 @@ def turnaround_watch():
     snapshot = snapshot.merge(prior, on="company_id", how="left")
 
     result = snapshot[
-        (snapshot["revenue_cagr_3yr"] > 10) &
-        (snapshot["free_cash_flow_cr"] > 0) &
-        (snapshot["debt_to_equity"] < snapshot["prior_de"])  # declining YoY
+        (snapshot["revenue_cagr_3yr"] > 10)
+        & (snapshot["free_cash_flow_cr"] > 0)
+        & (snapshot["debt_to_equity"] < snapshot["prior_de"])  # declining YoY
     ]
-    return result.sort_values("composite_quality_score", ascending=False, na_position="last")
+    return result.sort_values(
+        "composite_quality_score", ascending=False, na_position="last"
+    )
 
 
 PRESETS = {
