@@ -312,7 +312,7 @@ n100_financial_intelligence/
 - [x] `output/cluster_labels.csv` — all 92 companies assigned to one of 5 profiled clusters
 - [x] `reports/elbow_plot.png`, `reports/correlation_heatmap.png`, `output/outlier_report.csv`, `output/portfolio_stats.csv`
 - [x] `src/api/` — 16 live FastAPI endpoints, `docs/openapi.json`, full Postman collection
-- [x] 146/146 tests passing (`reports/pytest_report.html`), including 22 new tests written this sprint
+- [x] 146/146 tests passing (`reports/pytest_report.html`), including 34 new tests written this sprint (13 API, 3 dashboard/API parity, 9 pros/cons regression, plus loader tests carried in from Day 41)
 - [x] `output/perf_notes.md` — load test, dashboard load time, and simultaneous-process checks, all passing with large headroom; SQLite indexing evaluated and found unnecessary at current scale
 - [x] 119 missing docstrings inserted (0 remaining), `black`/`ruff` clean
 - [x] `docs/analyst_guide.pdf` — 10 pages
