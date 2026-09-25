@@ -8,16 +8,16 @@ Copies every real, confirmed deliverable from Sprints 1-6 into
 output/final_deliverables/, organized by sprint subfolder, and writes
 a manifest.
 
-Note on the spec's "23 deliverables": no single enumerated list of
-exactly 23 items exists anywhere in this project's history -- it's a
-spec-stated count, not something ever itemized file-by-file. The real,
-confirmed deliverable set below has 31 or 32 distinct items (depending
-on whether output/perf_notes.md exists -- see the check below), likely
-because the spec's "23" bundles some multi-file outputs (e.g. all of
-Sprint 5's NLP outputs) as single line items rather than counting each
-file. Documented here explicitly, same treatment as the sector-count
-(10 vs 11) and tearsheet-count (91 vs 92) discrepancies elsewhere in
-this project, rather than trimming the real list to force a match.
+2026-09 fix: the original list was missing 3 real deliverables --
+config/screener_config.yaml (D-08 on the official PM checklist),
+notebooks/exploratory_queries.sql (D-04), and docs/acceptance_checklist.pdf
+(D-23, didn't exist yet when this script was first written). Also fixed
+directory copies pulling in __pycache__ .pyc junk (confirmed in the
+sprint6/api/ copy) -- copytree now ignores __pycache__ explicitly.
+
+data/nifty100.db (D-01) is deliberately NOT copied here -- it's
+gitignored and can be large; it must be uploaded to Drive's
+02_Database folder directly, not through this archive.
 
 Usage:
     python scripts/archive/build_final_deliverables.py
@@ -28,17 +28,21 @@ import shutil
 
 DEST_ROOT = "output/final_deliverables"
 
+IGNORE_PATTERNS = shutil.ignore_patterns("__pycache__", "*.pyc")
+
 # (source path, sprint label, is_directory)
 DELIVERABLES = [
     # --- Sprint 1 ---
     ("output/load_audit.csv", "sprint1", False),
     ("output/validation_failures.csv", "sprint1", False),
+    ("notebooks/exploratory_queries.sql", "sprint1", False),
     # --- Sprint 2 ---
     ("output/capital_allocation.csv", "sprint2", False),
     ("output/ratio_edge_cases.log", "sprint2", False),
     # --- Sprint 3 ---
     ("output/screener_output.xlsx", "sprint3", False),
     ("output/peer_comparison.xlsx", "sprint3", False),
+    ("config/screener_config.yaml", "sprint3", False),
     ("reports/radar_charts", "sprint3", True),
     # --- Sprint 4 ---
     ("output/valuation_summary.xlsx", "sprint4", False),
@@ -67,7 +71,8 @@ DELIVERABLES = [
     ("docs/N100 Financial Intelligence Platform API.postman_collection.json", "sprint6", False),
     ("reports/pytest_report.html", "sprint6", False),
     ("docs/analyst_guide.pdf", "sprint6", False),
-    ("output/perf_notes.md", "sprint6", False),  # flagged if missing, see check below
+    ("docs/acceptance_checklist.pdf", "sprint6", False),
+    ("output/perf_notes.md", "sprint6", False),
 ]
 
 
@@ -90,7 +95,7 @@ def main():
         if is_dir:
             if os.path.exists(dest):
                 shutil.rmtree(dest)
-            shutil.copytree(src, dest)
+            shutil.copytree(src, dest, ignore=IGNORE_PATTERNS)
             file_count = sum(len(files) for _, _, files in os.walk(dest))
             manifest.append(f"{sprint}/{basename}/  ({file_count} files)")
         else:
@@ -103,17 +108,11 @@ def main():
         f.write("N100 Financial Intelligence Platform -- Final Deliverables Manifest\n")
         f.write("=" * 70 + "\n\n")
         f.write(
-            f"Archived {len(manifest)} of {len(DELIVERABLES)} listed deliverables.\n"
+            f"Archived {len(manifest)} of {len(DELIVERABLES)} listed deliverables.\n\n"
         )
         f.write(
-            "Note: the Sprint 6 spec states '23 deliverables' but no single\n"
-            "itemized list of exactly 23 exists anywhere in this project's\n"
-            "history. The real, confirmed deliverable set (this manifest) has\n"
-            f"{len(DELIVERABLES)} distinct items across all 6 sprints -- likely because\n"
-            "the spec bundles some multi-file outputs as single line items.\n"
-            "Documented here rather than trimmed to force a match, consistent\n"
-            "with this project's handling of the sector-count (10 vs 11) and\n"
-            "tearsheet-count (91 vs 92) discrepancies.\n\n"
+            "Note: data/nifty100.db (D-01) is deliberately excluded from this\n"
+            "archive -- gitignored, uploaded to Drive's 02_Database separately.\n\n"
         )
         if missing:
             f.write(f"MISSING ({len(missing)}), not archived:\n")

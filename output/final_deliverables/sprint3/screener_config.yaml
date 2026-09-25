@@ -1,0 +1,94 @@
+# N100 Financial Intelligence Platform
+# Sprint 3, Day 15: Screener Configuration
+# All 15 filterable metrics. Analyst-editable -- no code changes needed
+# to adjust thresholds, only to add wholly new metrics.
+
+metrics:
+  roe_min:
+    column: return_on_equity_pct
+    source: financial_ratios
+    direction: min
+
+  de_max:
+    column: debt_to_equity
+    source: financial_ratios
+    direction: max
+    sector_exempt: Financials   # per spec Day 15: skip D/E max filter for Financials sector
+
+  fcf_min:
+    column: free_cash_flow_cr
+    source: financial_ratios
+    direction: min
+
+  revenue_cagr_5yr_min:
+    column: revenue_cagr_5yr
+    source: financial_ratios
+    direction: min
+
+  pat_cagr_5yr_min:
+    column: pat_cagr_5yr
+    source: financial_ratios
+    direction: min
+
+  opm_min:
+    column: operating_profit_margin_pct
+    source: financial_ratios
+    direction: min
+
+  pe_max:
+    column: pe_ratio
+    source: market_cap
+    direction: max
+
+  pb_max:
+    column: pb_ratio
+    source: market_cap
+    direction: max
+
+  dividend_yield_min:
+    column: dividend_yield_pct
+    source: market_cap
+    direction: min
+
+  icr_min:
+    column: interest_coverage
+    source: financial_ratios
+    direction: min
+    debt_free_as_infinity: true   # per spec Day 15: 'Debt Free' label always passes ICR min
+
+  market_cap_min:
+    column: market_cap_crore
+    source: market_cap
+    direction: min
+
+  net_profit_min:
+    column: net_profit
+    source: profitandloss
+    direction: min
+
+  eps_cagr_min:
+    column: eps_cagr_5yr
+    source: financial_ratios
+    direction: min
+
+  asset_turnover_min:
+    column: asset_turnover
+    source: financial_ratios
+    direction: min
+
+  sales_min:
+    column: sales
+    source: profitandloss
+    direction: min
+
+# Outlier guard: excludes company-years where net_profit is an extreme
+# multiple of equity_capital+reserves (confirmed pattern from Sprint 2:
+# HAL ~37x, BEL ~47x, INDIGO ~9x -- all produced meaningless ROE/ROCE
+# values that would otherwise contaminate screener results).
+outlier_guard:
+  enabled: true
+  max_profit_to_equity_ratio: 5
+
+# Presets defined on Day 16 -- placeholder here so the file structure
+# is stable from Day 15 onward.
+presets: {}
